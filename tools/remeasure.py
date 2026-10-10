@@ -89,6 +89,13 @@ def main():
     page_files = collect_pages(args.pages)
     if not page_files:
         sys.exit('页数据为空：检查 --pages 路径')
+    missing = [str(p) for p in page_files if not p.exists()]
+    if missing:
+        sys.exit('页数据文件不存在：' + '、'.join(missing))
+    if not Path(args.crepe).exists():
+        sys.exit(f'CREPE CSV 不存在：{args.crepe}')
+    if args.builder and not Path(args.builder).exists():
+        sys.exit(f'builder 不存在：{args.builder}')
 
     print("=" * 46)
     if args.builder:
