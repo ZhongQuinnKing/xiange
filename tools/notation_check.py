@@ -186,6 +186,12 @@ def _xml_chains(seq):
 
 
 def check_part(part, part_index, staves_declared, part_name):
+    # 声乐谱识别：XML 层查 <lyric> 标签（按字分杠属合法）——N1a 对声乐谱不适用（2026-10-10 修）
+    try:
+        has_lyrics = any('lyric' in (el.tag if isinstance(el.tag, str) else '')
+                         for el in part.iter())
+    except AttributeError:
+        has_lyrics = False
     for mno, seq, div, unit_q, ts in _collect(part):
         expected = _expected_groups(seq, div, unit_q)
         exp_keys = {tuple(round(e['onset'], 4) for e in g) for g in expected}
@@ -203,6 +209,8 @@ def check_part(part, part_index, staves_declared, part_name):
             key = tuple(round(e['onset'], 4) for e in g)
             ck = onset_chain.get(key[0]) if key else None
             if not (ck is not None and all(o in ck for o in key)):
+                if has_lyrics:
+                    continue   # 声乐谱按字分杠合法，不报（已在卡脚注声明）
                 beat = int((g[0]['onset'] / div) // unit_q) + 1
                 ons = '、'.join(f"{e['onset'] / div:.2f}" for e in g)
                 add('严重', 'N1a', mno,
@@ -385,7 +393,7 @@ def build_report(source, label=None):
         lines.append(f'  [{sev}] {code} {code_names.get(code, "")} m{mno}: {desc}')
     lines.append('')
     lines.append('口径：严重＝违反通用记谱规范（人无需再看）／轻＝约定与风格偏差（人可裁）')
-    lines.append('注：N1a 面向器乐谱；声乐谱按字分杠属合法，不适用本关')
+    lines.append('注：N1a 面向器乐谱；声乐谱（含歌词者自动识别）按字分杠合法，已跳过不报（2026-10-10 实测验修）')
     lines.append('注：复拍子按附点单位分组；本器实测覆盖 4/4，其余拍号与十六分次级符杠规则标 [?]')
     lines.append('注：N2b 只对钢琴双谱表与 RH/LH 命名谱生效，其余谱不判符干约定')
     return '\n'.join(lines), findings
