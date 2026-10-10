@@ -17,10 +17,24 @@
   走 breaks='encoded' + redoLayout（实测 breaks 更新必须重排才落实）。
   MusicXML 无 new-system 标记行为同 auto；默认路径（不加此参数）与旧版完全一致。
 """
-import sys, os, glob, time
+import sys, os, glob, time, re
 import verovio, cairosvg
 
 DPI_A4 = 254  # 2100px * 72/254 = 595.3pt = A4 宽
+CJK_TEXT_RE = re.compile(r'<tspan[^>]*>[^<]*[一-鿿]')
+
+
+def cjk_font_fix(svg):
+    """含中文的谱面：把文本字体换成带 CJK 字形的系统字体。
+
+    2026-10-10 实测：verovio 输出的歌词/标题是真文本（font-family="Times, serif"），
+    Times 无中文字形，渲染出豆腐块；转换层换 Hiragino 后中文正常。
+    触发条件只认"会渲染的文字元素"（元数据里的中文不算），
+    不触发时原样返回：既有件输出逐字节不变（png 已实测一致）。
+    """
+    if CJK_TEXT_RE.search(svg):
+        return svg.replace('font-family="Times, serif"', 'font-family="Hiragino Sans GB"')
+    return svg
 
 def render(src, outbase, a4, fixed_lines=False):
     tk = verovio.toolkit()
@@ -45,7 +59,7 @@ def render(src, outbase, a4, fixed_lines=False):
         tk.redoLayout()  # breaks 更新须重排才落实（版式实验实测）
     n = tk.getPageCount()
     for p in range(1, n + 1):
-        svg = tk.renderToSVG(p)
+        svg = cjk_font_fix(tk.renderToSVG(p))
         with open(f'{outbase}_p{p}.svg', 'w') as f:
             f.write(svg)
         cairosvg.svg2png(bytestring=svg.encode('utf-8'),
