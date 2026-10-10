@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+theory_check 自校验 — 构造病例谱，验证每条规则的真阳性与假阳性
+
+病例（人工构造，症状已知）：
+  干净例   C-G-Am-F 四部写法        → 不许有任何严重项
+  平行五度 m1-2：两外声部同向 C-G / D-A → E3 必须报
+  声部交叉 m3  ：高声部掉到低声部下方   → E1 必须报
+  超十度   m4  ：右单手同时按 15 度     → E4 必须报
+
+用法: python3 test_theory_check.py
+"""
+import os
+import sys
+import tempfile
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+import theory_check
+from theory_check import build_report
+
+from music21 import stream, note, chord, meter
+
+
+def make_score(cases):
+    """cases: {measure_no: [('RH'|'LH', [midi...], quarterLength), ...]}"""
+    sc = stream.Score()
+    parts = []
+    for part_name in ('RH', 'LH'):
+        p = stream.Part()
+        p.partName = part_name
+        p.append(meter.TimeSignature('4/4'))
+        for mno in sorted(cases):
+            m = stream.Measure(number=mno)
+            for hand, midis, ql in cases[mno]:
+                if hand != part_name:
+                    continue
+                if len(midis) == 1:
+                    n = note.Note(midis[0])
+                else:
+                    n = chord.Chord(midis)
+                n.quarterLength = ql
+                m.append(n)
+            p.append(m)
+        parts.append(p)
+    for p in reversed(parts):
+        sc.insert(0, p)
+    return sc
+
+
+def run_case(name, cases, must, must_not):
+    sc = make_score(cases)
+    fd, tmp = tempfile.mkstemp(suffix='.musicxml')
+    os.close(fd)
+    sc.write('musicxml', fp=tmp)
+    res = build_report(tmp)
+    os.unlink(tmp)
+    codes = [f[1] for f in res[1]]
+    ok = all(c in codes for c in must) and all(c not in codes for c in must_not)
+    mark = '✓' if ok else '✗'
+    print(f'{mark} {name}: 症状={codes}｜须有={must} 须无={must_not}')
+    return ok
+
+
+def main():
+    all_ok = True
+
+    # 1 干净例：C 大三和弦上下分布，无并行五八度无交叉
+    clean = {
+        1: [('RH', [67, 72], 4.0), ('LH', [48, 55, 60], 4.0)],
+        2: [('RH', [65, 69], 4.0), ('LH', [45, 53, 57], 4.0)],
+    }
+    all_ok &= run_case('干净例无严重项', clean, must=[], must_not=['E1', 'E3', 'E4'])
+
+    # 2 平行五度：RH 62→64，LH 55→57（同向，间隔恒为 7）
+    p5 = {
+        1: [('RH', [62], 2.0), ('LH', [55], 2.0)],
+        2: [('RH', [64], 2.0), ('LH', [57], 2.0)],
+    }
+    all_ok &= run_case('平行五度被捉', p5, must=['E3'], must_not=['E4'])
+
+    # 3 声部交叉：RH 掉到 50，LH 在 60
+    cross = {
+        1: [('RH', [50], 4.0), ('LH', [60], 4.0)],
+    }
+    all_ok &= run_case('声部交叉被捉', cross, must=['E1'], must_not=['E3', 'E4'])
+
+    # 4 超十度：RH 同拍 60 与 76（相差 16 = 正好十度，不报），60 与 77（17 超）报
+    span = {
+        1: [('RH', [60, 76], 2.0), ('LH', [40], 4.0)],
+        2: [('RH', [60, 77], 2.0), ('LH', [40], 4.0)],
+    }
+    all_ok &= run_case('超十度被捉（大十度不误报）', span, must=['E4'], must_not=['E1'])
+
+    print()
+    if all_ok:
+        print('✓✓ 四病例全过 — 乐理错检器判据正确')
+    else:
+        print('✗✗ 有病例不过，修到全过为止')
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()
