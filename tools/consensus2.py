@@ -4,7 +4,8 @@
 引擎：homr(权重2.0) / SMT(1.5) / oemer(1.0, 行级粗证)
 输出：每节"高置信集"（按权重阈值），并与单引擎对比
 """
-import re, glob
+import re
+import sys, glob
 import music21
 
 KERN_PC = {'C':0,'D':2,'E':4,'F':5,'G':7,'A':9,'B':11}
@@ -54,7 +55,7 @@ def homr_bars(paths):
     return seq
 
 def load_truth():
-    s = music21.converter.parse('/Users/user/Desktop/转谱/失眠_LadiesNight/数字源/数字源_Midishow_v4.musicxml')
+    s = music21.converter.parse(sys.argv[1])
     c = {}
     for p in s.parts:
         for m in p.getElementsByClass('Measure'):

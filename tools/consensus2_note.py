@@ -3,7 +3,8 @@
 """v1 音符级（MIDI 音高，含八度）对比与分工式试算
 SMT 侧用自写 kern 解析（不借 music21——绕 spine 坑）；octave 按 kern 大小写规则
 """
-import re, glob
+import re
+import sys, glob
 import music21
 
 KERN_PC = {'C':0,'D':2,'E':4,'F':5,'G':7,'A':9,'B':11}
@@ -59,7 +60,7 @@ def bars_midi_multi(paths):
 
 def J(a, b): return len(a & b) / len(a | b) if (a | b) else 1.0
 
-T = bars_midi('/Users/user/Desktop/转谱/失眠_LadiesNight/数字源/数字源_Midishow_v4.musicxml')
+T = bars_midi(sys.argv[1])
 
 print('===== B720（1-13 节，MIDI 音高级）=====')
 H = bars_midi_multi(sorted(glob.glob('/var/tmp/homr_test/B720_row[1-4].musicxml')))
