@@ -8,13 +8,20 @@
 4. 跨域引用完整性（"见X域"指向的域文档存在）
 5. 回归锚点（问答实例引用的关键依据句仍可检索）
 
-输出：~/Desktop/音乐技能包-内部/质检报告_自动.md（每次覆盖）
-退出码：0=全过；1=有问题（供上层提醒用）
+输出：环境变量 MUSIC_CHECK_OUT 指定为文件路径时写入该文件（每次覆盖）；未设定则只打印
+退出码：0=全过；1=有问题（供上层提醒用）；2=知识库目录不存在
 """
 import re, sys, glob, os, datetime
 
-KB = os.path.expanduser('~/Desktop/音乐技能包/知识/')
-OUT = os.path.expanduser('~/Desktop/音乐技能包-内部/质检报告_自动.md')
+# 知识库＝本脚本上级目录的 知识/（本机与发布版结构一致；MUSIC_CHECK_KB 可覆盖）
+KB = os.environ.get('MUSIC_CHECK_KB', '')
+if not KB:
+    KB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '知识')
+KB = KB.rstrip('/') + '/'
+if not os.path.isdir(KB):
+    print('知识库目录不存在：%s' % KB)
+    sys.exit(2)
+OUT = os.environ.get('MUSIC_CHECK_OUT', '')
 
 # 允许的"专名类"字符范围（今天质检验证过的合法用法）
 def char_ok(ch):
@@ -80,6 +87,7 @@ if problems:
     lines += ['- ' + p for p in problems]
 else:
     lines.append('## 全部通过（破折号配额 / 字符 / 标点 / 引用 / 锚点）')
-open(OUT, 'w', encoding='utf-8').write('\n'.join(lines) + '\n')
+if OUT:
+    open(OUT, 'w', encoding='utf-8').write('\n'.join(lines) + '\n')
 print('\n'.join(lines))
 sys.exit(1 if problems else 0)

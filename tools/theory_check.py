@@ -12,6 +12,9 @@ theory_check — 乐理错检器（护城河第④层：乐理解读层）
   E2 和弦音集   —— 同拍音高集合构成超出可能的音簇（四度叠置以上）[?] 待知识库细校，先只报强八度不报
   E3 平行五八度 —— 两声部连续两拍同向而行，且连续构成纯五度或纯八度（严重）
   E4 空拍不可弹 —— 同手同时发音超过大十度（16 半音）（严重，编配手型上限（十度））
+  E5 声部密度骤降 —— 持续和弦（≥2 拍、≥2 音）之后紧跟的发音点，音数骤降 ≥2（轻，待裁）
+                     专抓"音类在、声部掉"的成组内声部缺失：和弦组成音类由他声部/
+                     他八度顶班，音类级检查天生放行，本规则看同一手内音数守恒
   W1 声部重叠   —— 同声部内前音尚未结束、后音又起且高于前音的进行（轻）
   W2 小节时值   —— 小节内音符时值总和与拍号不符（除弱起小节）（轻）
 
@@ -30,6 +33,8 @@ from collections import OrderedDict
 from music21 import converter, interval as m21interval
 
 SPAN_LIMIT = 16  # 大十度 = 16 半音（用户手型上限，2026-09-19 定，不可改）
+E5_MIN_DUR = 2.0  # E5：持续和弦最短时值（四分音符数）＝2 拍
+E5_DROP = 2       # E5：音数骤降阈值
 FINDINGS = []    # (sev, code, measure, desc)
 
 
@@ -159,6 +164,32 @@ def check_file(path):
                             f'{hi_name} 与 {lo_name} 连续同向构成平行{("八度" if c1 == "8ve" else "五度")}'
                             f'（{a1}/{b1} → {a2}/{b2}）')
 
+    # ── E5 声部密度骤降（同手音数守恒；"音类在、声部掉"的成组内声部缺失）──
+    # 判据：同一声部、同一小节内，一个持续 >= 2 拍的多音和弦（>=2 音）之后
+    #       紧跟的下一个发音点，音数比该和弦少 >= 2 个。
+    # 依据：持续和弦（柱式或滚奏）＝该声部处于"多音持续"织体，下一个发音点应延续
+    #       同一织体（换和弦或再陈述）。骤降成单音/双音，是滚奏/柱式内声部成组丢失的
+    #       典型症状；这类错的和弦组成音类往往还在（被另一声部或另一八度顶班），
+    #       音类级检查放行，故用同手音数守恒单列一条。
+    # 边界：持续和弦后合法地接单音旋律线（如 3/4 舞曲"和弦＋单音"收句）同样触发
+    #       ——属提示不属定案，故列"轻"（人可抽验），不作自动改谱依据。
+    for name, evs in part_events.items():
+        for mno, lst in evs.items():
+            lst_sorted = sorted(lst, key=lambda x: x[0])
+            for k in range(len(lst_sorted) - 1):
+                o1, ps1, d1 = lst_sorted[k]
+                o2, ps2, d2 = lst_sorted[k + 1]
+                n1 = len(set(ps1))     # 按音高去重计数：同音重复是识别毛刺，不当事部
+                if n1 < 2 or d1 < E5_MIN_DUR - 1e-6:
+                    continue
+                if o2 <= o1 + 1e-6:
+                    continue
+                n2 = len(set(ps2))
+                if n1 - n2 >= E5_DROP:
+                    add('轻', 'E5', mno,
+                        f'{name} 持续和弦 {ps1}（{d1} 拍）后骤降为 {ps2}'
+                        f'（{n1}→{n2} 音）')
+
     # ── W1 音节交叠：前一音未完，后起音在前音音域内（潜在声部交叉/叠置）
     #     后起音整体高于前音＝可疑交叠（轻）；整体含在前音范围内＝常规延续，不报
     for name, evs in part_events.items():
@@ -205,7 +236,8 @@ def build_report(path):
         return None
     check_measure_lengths(score)
     code_names = {'E1': '声部交叉', 'E2': '和弦音集', 'E3': '平行五八度',
-                  'E4': '超十度', 'W1': '声部重叠', 'W2': '小节时值'}
+                  'E4': '超十度', 'E5': '声部密度骤降',
+                  'W1': '声部重叠', 'W2': '小节时值'}
     order = {'严重': 0, '轻': 1}
     findings = sorted(FINDINGS, key=lambda f: (order.get(f[0], 9), f[2], f[1]))
     lines = []
@@ -221,6 +253,8 @@ def build_report(path):
     lines.append('')
     lines.append('口径：严重＝机械可判的乐理错（人无需再看）／轻＝可疑点（人可抽验）')
     lines.append('注：平行五度在流行织体里可能是有意的〔[?] 需听感判断，人裁〕')
+    lines.append('注：E5 声部密度骤降是启发式（同手音数守恒），合法织体切换也会触发——'
+                 '只作待裁提示，不作自动改谱依据')
     return '\n'.join(lines), findings
 
 
