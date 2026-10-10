@@ -33,7 +33,7 @@
   - 05-交付标准
   - 06-实测记录
 - tools/  工具脚本
-  - 已入：复刻重测（remeasure：机器×手工一致度）、渲染交付（vv_render：MusicXML→SVG/PNG/PDF 一条龙，含 A4 版式与批量）、渲染对比（render_v4）、谱面体检（score_doctor：inspect 体检／fix 修整，fix 自带 .orig 备份与改动明细）、音频对拍（verify_vs_audio）、B站提页（bili_extract）、数字源验证三件套（verify）、多引擎共识（consensus／consensus2）、统一评价引擎（omr_eval：四级度量＋标准报告卡）、乐理错检器（theory_check：声部交叉／平行五八度／超十度／声部密度骤降／时值）
+  - 已入：复刻重测（remeasure：机器×手工一致度）、渲染交付（vv_render：MusicXML→SVG/PNG/PDF 一条龙，含 A4 版式与批量）、渲染对比（render_v4）、谱面体检（score_doctor：inspect 体检／fix 修整，fix 自带 .orig 备份与改动明细）、音频对拍（verify_vs_audio）、B站提页（bili_extract）、数字源验证三件套（verify）、多引擎共识（consensus／consensus2）、统一评价引擎（omr_eval：四级度量＋标准报告卡）、乐理错检器（theory_check：声部交叉／平行五八度／超十度／声部密度骤降／时值）、记谱规范两件（notation_check 检符杠分组／符干方向／休止符布局／谱表分配；notation_fix 为对应后处理：八分按拍两两连杠、符干 RH 上 LH 下，幂等）
   - 自测：tools/tests/ 三套（test_omr_eval 五场景、test_theory_check 六病例、test_score_doctor 重叠判据与 fix 安全网），随时可复跑验证判据
 - SKILL.md  技能入口（给 AI 装包的总说明；两条能力线分流）
 - 知识/  音乐知识底座（九域十六份约十万字：乐理记谱／和声／曲式／复调／配器／编配即兴／风格体系／世界音乐／音乐史／音乐教育，＋问答协议与动态档；入口见 知识/_总纲.md）
