@@ -191,7 +191,9 @@ def check_measure_lengths(score):
                 continue
             expect = ts.barDuration.quarterLength
             total = sum(float(el.quarterLength) for el in els)
-            if abs(total - expect) > 1.0 and total > 0.5:
+            # 阈值 >= 1 拍：差值恰 1.0（如 4/4 里 5 拍小节）也要报——
+            # 旧判据 > 1.0 严格大于，把"多整整一拍"这个最典型错型漏成盲区
+            if abs(total - expect) >= 1.0 - 1e-6 and total > 0.5:
                 add('轻', 'W2', meas.number,
                     f'{ps.partName or "谱表"} 小节时值 {total} ≠ 拍号 {expect}')
 

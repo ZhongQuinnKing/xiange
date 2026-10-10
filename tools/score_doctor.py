@@ -8,11 +8,19 @@ score_doctor — 扒谱修正台
 
 inspect: 读谱体检 —— 声部/音域/异常点清单，输出到终端
 fix:     修整导出 —— 时值量化到常规音值、去重叠、出干净 MusicXML 给 Dorico
+         安全约定：改前自动备份原文件为 <输入>.orig（只留第一份、不覆盖）；
+         改后列出被改动音符明细（终端 + <输出>.changes.txt），破坏性动作不沉默；
+         修后自检重叠不收敛会显式警告。修完请人工核对明细再采用。
 
 原则：只动时值和重叠，不改音高。音高的错要人来判，工具不擅自"修音"。
+
+坐标纪律：一切时间比较（重叠判据、跨度分组、截短）都用全局坐标
+getOffsetInHierarchy。el.offset 是小节内局部坐标，跨小节混排会把"上一
+小节末尾音"与"下一小节开头音"错排成相邻，对任何多小节文件系统性误报。
 """
 import sys
 import os
+import shutil
 from collections import Counter
 
 from music21 import converter, stream, note, chord, tempo as m21tempo, meter
@@ -56,12 +64,39 @@ def nearest_std(q):
     return min(STD_DURS, key=lambda s: abs(s - q))
 
 
+def floor_fit(space):
+    """截短余量吸附：取不超过 space 的最大标准音值（防止就近吸附吸大后再生重叠）"""
+    cand = [s for s in STD_DURS if s <= space + 1e-9]
+    return max(cand) if cand else 0.0625
+
+
+def find_overlaps(items):
+    """同声部内真重叠：前音结束越过后音起点。
+
+    items = [(全局offset, 元素)]。返回 [(前音, 后音, 前音offset, 后音offset)]。
+    inspect 与 fix 共用这唯一判据，防止两处口径漂移（历史上正是两处
+    口径不一致导致误报 + 误修）。
+    """
+    hits = []
+    srt = sorted(items, key=lambda x: x[0])
+    for i in range(1, len(srt)):
+        prev_off, prev_el = srt[i - 1]
+        next_off = srt[i][0]
+        if prev_off + float(prev_el.quarterLength) > next_off + 0.01:
+            hits.append((prev_el, srt[i][1], prev_off, next_off))
+    return hits
+
+
 def load(path):
     return converter.parse(path)
 
 
 def parts_of(score):
-    """返回 {声部名: [(offset, 音符对象)]}，兼容单声部文件和总谱"""
+    """返回 {声部名: [(全局offset, 音符对象)]}，兼容单声部文件和总谱
+
+    offset 取全局坐标（getOffsetInHierarchy）——局部坐标会让跨小节的
+    排序比较错位，对多小节文件系统性误报重叠。
+    """
     parts = {}
     src = score.parts if score.parts else [score]
     for i, p in enumerate(src):
@@ -69,7 +104,7 @@ def parts_of(score):
         items = []
         for el in p.recurse().notesAndRests:
             if isinstance(el, (note.Note, chord.Chord)):
-                items.append((float(el.offset), el))
+                items.append((float(el.getOffsetInHierarchy(score)), el))
         parts[str(name)] = items
     return parts
 
@@ -120,17 +155,12 @@ def inspect(path):
             issues.append(f"{name}: 非常规时值 {[(d, c) for d, c in odd_top]}（疑似量化不准）")
             print(f"  ⚠ 非常规时值: {odd_top}")
 
-    # 跨声部重叠（同一时刻同一声部内两音重叠）
+    # 同声部内重叠（真重叠：前音结束越过后音起点；全局坐标统一判据）
     for name, items in parts.items():
-        ovs = 0
-        srt = sorted(items, key=lambda x: x[0])
-        for i in range(1, len(srt)):
-            prev_off, prev_el = srt[i-1]
-            if prev_off + float(prev_el.quarterLength) > srt[i][0] + 0.01:
-                ovs += 1
-        if ovs > 3:
-            issues.append(f"{name}: {ovs} 处音符重叠（同声部内音没有正确断开）")
-            print(f"  ⚠ {name} 有 {ovs} 处自重叠")
+        ovs = find_overlaps(items)
+        if ovs:
+            issues.append(f"{name}: {len(ovs)} 处音符重叠（同声部内音没有正确断开）")
+            print(f"  ⚠ {name} 有 {len(ovs)} 处自重叠")
 
     # 和弦密度
     dense = 0
@@ -163,8 +193,26 @@ def inspect(path):
 
 def fix(in_path, out_path):
     score = load(in_path)
-    fixed_dur = 0
-    trimmed = 0
+    changes = []   # 被改动音符明细（字符串行）
+
+    # 改前自动备份原文件（.orig 只留第一份，不覆盖）
+    bak = in_path + '.orig'
+    if os.path.exists(bak):
+        print(f"原文件备份已存在（保留最初版）: {bak}")
+    else:
+        shutil.copy2(in_path, bak)
+        print(f"原文件已备份: {bak}")
+
+    def tag(el):
+        """明细用标记：音名 + 全局位置（拍）"""
+        nm = el.nameWithOctave if isinstance(el, note.Note) else f'和弦({len(el.pitches)}音)'
+        return nm, float(el.getOffsetInHierarchy(score))
+
+    # 量化前快照（量化是最沉默的一步，改动也要可见）
+    all_els = [el for p in (score.parts if score.parts else [score])
+               for el in p.recurse().notesAndRests
+               if isinstance(el, (note.Note, chord.Chord))]
+    snap = {id(el): (float(el.offset), float(el.quarterLength)) for el in all_els}
 
     # 先量化：扒谱出的零碎时值里既有普通音也有三连音，
     # 同时保留 2/3/4 分法，否则三连音会被吸到普通音值上，节奏整个错乱
@@ -173,6 +221,21 @@ def fix(in_path, out_path):
     except Exception as e:
         print(f"量化跳过（{str(e)[:50]}），直接走时值吸附")
 
+    quant_n = 0
+    for el in all_els:
+        s = snap.get(id(el))
+        if s is None:
+            continue
+        if abs(s[1] - float(el.quarterLength)) > 1e-6 or abs(s[0] - float(el.offset)) > 1e-6:
+            quant_n += 1
+            if quant_n <= 5:
+                nm, off = tag(el)
+                changes.append(f"[量化] 全局{off:7.2f}拍 {nm}: 时值 {s[1]:.2f}→{float(el.quarterLength):.2f}")
+    if quant_n > 5:
+        changes.append(f"[量化] ……另有 {quant_n - 5} 个音被量化调整（合计 {quant_n}）")
+
+    fixed_dur = 0
+    trimmed = 0
     for p in (score.parts if score.parts else [score]):
         for el in p.recurse().notesAndRests:
             if not isinstance(el, (note.Note, chord.Chord)):
@@ -184,23 +247,54 @@ def fix(in_path, out_path):
             if abs(nq - q) <= 0.14 * q and nq != q:   # 偏差小于 14% 才吸附
                 el.quarterLength = nq
                 fixed_dur += 1
+                nm, off = tag(el)
+                changes.append(f"[吸附] 全局{off:7.2f}拍 {nm}: 时值 {q:.3f}→{nq}")
             elif q > 0.05 and nq != q:
                 el.quarterLength = nq
                 fixed_dur += 1
+                nm, off = tag(el)
+                changes.append(f"[吸附] 全局{off:7.2f}拍 {nm}: 时值 {q:.3f}→{nq}")
 
-        # 同声部内重叠：把前一个音截短到后一个音起点
-        items = [el for el in p.recurse().notes]
-        srt = sorted(items, key=lambda e: float(e.offset))
-        for i in range(1, len(srt)):
-            prev = srt[i-1]
-            if float(prev.offset) + float(prev.quarterLength) > float(srt[i].offset) + 0.01:
-                newq = max(0.0625, float(srt[i].offset) - float(prev.offset))
-                prev.quarterLength = nearest_std(newq) if newq >= 0.125 else 0.125
-                trimmed += 1
+        # 去重叠：统一判据（全局坐标）定位，前音截短不越过后音起点；
+        # 截短量吸附用 floor（≤空间的标准值），防吸大后再生重叠
+        items = [(float(el.getOffsetInHierarchy(score)), el) for el in p.recurse().notes]
+        for prev_el, next_el, prev_off, next_off in find_overlaps(items):
+            space = next_off - prev_off
+            old_q = float(prev_el.quarterLength)
+            new_q = floor_fit(space)
+            if new_q >= old_q - 1e-9:
+                continue   # 防御：空间不小于原时值（不该发生）
+            prev_el.quarterLength = new_q
+            trimmed += 1
+            nm, off = tag(prev_el)
+            n_nm, n_off = tag(next_el)
+            changes.append(f"[去重叠] 全局{off:7.2f}拍 {nm}: 时值 {old_q:.2f}→{new_q}"
+                           f"（被 {n_off:.2f} 拍起的 {n_nm} 顶住）")
 
     span_hits = span_check(parts_of(score))
+
+    # 修后自检：同一判据重扫，不收敛必须可见
+    left = []
+    for p in (score.parts if score.parts else [score]):
+        items = [(float(el.getOffsetInHierarchy(score)), el) for el in p.recurse().notes]
+        left += find_overlaps(items)
+
     score.write('musicxml', fp=out_path)
     print(f"时值修整 {fixed_dur} 处，去重叠 {trimmed} 处")
+    if changes:
+        changes_path = out_path + '.changes.txt'
+        with open(changes_path, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(changes) + '\n')
+        print(f"—— 改动明细（共 {len(changes)} 条）——")
+        for ln in changes[:12]:
+            print('  ' + ln)
+        if len(changes) > 12:
+            print(f"  ……另 {len(changes) - 12} 条见 {changes_path}")
+        print(f"  （全部明细已写入 {changes_path}）")
+    if left:
+        print(f"⚠ 修后自检：仍有 {len(left)} 处重叠未收敛，产物请人工核对（原文件备份在 {bak}）")
+    else:
+        print("修后自检：重叠 0 处（收敛）")
     if span_hits:
         print(f"⚠ 仍有 {len(span_hits)} 处同时发音超十度，Dorico 里要人工改成转位/分解")
     print(f"已导出: {out_path}")
