@@ -11,7 +11,7 @@ theory_check — 乐理错检器（护城河第④层：乐理解读层）
   E1 声部交叉   —— 两个声部同拍，低声部跑到高声部上面（严重）
   E2 和弦音集   —— 同拍音高集合构成超出可能的音簇（四度叠置以上）[?] 待知识库细校，先只报强八度不报
   E3 平行五八度 —— 两声部连续两拍同向而行，且连续构成纯五度或纯八度（严重）
-  E4 空拍不可弹 —— 同手同时发音超过大十度（16 半音）（严重，编配手型上限（十度））
+  E4 跨度过大   —— 同手同时发音超过默认可及上限（20 半音＝大十三度，--span 可调）（严重）
   E5 声部密度骤降 —— 持续和弦（≥2 拍、≥2 音）之后紧跟的发音点，音数骤降 ≥2（轻，待裁）
                      专抓"音类在、声部掉"的成组内声部缺失：和弦组成音类由他声部/
                      他八度顶班，音类级检查天生放行，本规则看同一手内音数守恒
@@ -32,7 +32,7 @@ from collections import OrderedDict
 
 from music21 import converter, interval as m21interval
 
-SPAN_LIMIT = 16  # 大十度 = 16 半音（用户手型上限，2026-09-19 定，不可改）
+SPAN_LIMIT = 20  # 默认可及上限：大十三度 = 20 半音（2026-10-10 改为面向用户（全球）的宽容默认；--span 可调）
 E5_MIN_DUR = 2.0  # E5：持续和弦最短时值（四分音符数）＝2 拍
 E5_DROP = 2       # E5：音数骤降阈值
 FINDINGS = []    # (sev, code, measure, desc)
@@ -60,8 +60,15 @@ def check_file(path):
 
     # 每声部：小节 → [(onset, pitches_sorted, dur, offset)]
     part_events = OrderedDict()
+    _seen = {}
     for pi, ps in enumerate(parts):
         name = ps.partName or f'P{pi + 1}'
+        # [本地适配 2026-10-11] 同名声部防塌陷（单 part 双谱表拆分后同名）
+        if str(name) in _seen:
+            _seen[str(name)] += 1
+            name = f'{name}#{_seen[str(name)]}'
+        else:
+            _seen[str(name)] = 1
         evs = OrderedDict()
         for meas in ps.getElementsByClass('Measure'):
             mno = meas.number
@@ -109,7 +116,7 @@ def check_file(path):
                     span = ps[-1] - ps[0]
                     if span > SPAN_LIMIT:
                         add('严重', 'E4', mno,
-                            f'{name} 同拍跨度 {span} 半音（超十度）：{ps}')
+                            f'{name} 同拍跨度 {span} 半音（超默认可及上限 {SPAN_LIMIT}）：{ps}')
 
     # ── E1 声部交叉（应在上者低于应在下者，或两者相交）─────
     if upper_staffs and lower_staffs:
@@ -236,7 +243,7 @@ def build_report(path):
         return None
     check_measure_lengths(score)
     code_names = {'E1': '声部交叉', 'E2': '和弦音集', 'E3': '平行五八度',
-                  'E4': '超十度', 'E5': '声部密度骤降',
+                  'E4': '跨度过大', 'E5': '声部密度骤降',
                   'W1': '声部重叠', 'W2': '小节时值'}
     order = {'严重': 0, '轻': 1}
     findings = sorted(FINDINGS, key=lambda f: (order.get(f[0], 9), f[2], f[1]))
@@ -262,7 +269,11 @@ def main():
     ap = argparse.ArgumentParser(description='乐理错检器（知识库驱动的机械检）')
     ap.add_argument('file', help='MusicXML/MIDI')
     ap.add_argument('--json', help='结果写 JSON')
+    ap.add_argument('--span', type=int, default=None, help='可及跨度上限（半音），默认 20（大十三度，面向用户可调）')
     args = ap.parse_args()
+    global SPAN_LIMIT
+    if args.span:
+        SPAN_LIMIT = args.span
     res = build_report(args.file)
     if res is None:
         sys.exit(1)

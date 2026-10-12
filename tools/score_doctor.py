@@ -30,7 +30,7 @@ DUR_NAMES = {4.0: '全音符', 3.0: '附点二分', 2.0: '二分', 1.5: '附点�
              0.75: '附点八分', 0.5: '八分', 0.375: '附点十六分', 0.25: '十六分',
              0.125: '三十二分', 0.0625: '六十四分'}
 
-SPAN_LIMIT = 16  # 手型上限：大十度。编配常用最大跨度为十度，超过就是弹不了的谱（2026-09-19 定）
+SPAN_LIMIT = 20  # 默认可及上限：大十三度 = 20 半音（2026-10-10 改，面向用户宽容默认，可按需调）
 
 _SIMPLE_DEG = {0: (1, '纯'), 1: (2, '小'), 2: (2, '大'), 3: (3, '小'), 4: (3, '大'), 5: (4, '纯'),
                6: (4, '增'), 7: (5, '纯'), 8: (6, '小'), 9: (6, '大'), 10: (7, '小'), 11: (7, '大')}
@@ -99,8 +99,15 @@ def parts_of(score):
     """
     parts = {}
     src = score.parts if score.parts else [score]
+    _seen = {}
     for i, p in enumerate(src):
         name = p.partName or getattr(p, 'id', None) or f'声部{i+1}'
+        # [本地适配 2026-10-11] 同名声部防塌陷（单 part 双谱表按谱表拆分后同名，字典会互相覆盖）
+        if str(name) in _seen:
+            _seen[str(name)] += 1
+            name = f'{name}#{_seen[str(name)]}'
+        else:
+            _seen[str(name)] = 1
         items = []
         for el in p.recurse().notesAndRests:
             if isinstance(el, (note.Note, chord.Chord)):
@@ -171,14 +178,14 @@ def inspect(path):
     if dense:
         issues.append(f"超过 6 音的和弦 {dense} 处（疑似把多声部混进一个和弦）")
 
-    # 手型跨度：编配常用最大跨度为十度，超了就是弹不了的
+    # 跨度：默认可及上限（大十三度），超了提示核对
     span_hits = span_check(parts)
     if span_hits:
         span_hits.sort(key=lambda x: -x[2])
         worst = span_hits[0]
-        issues.append(f"{len(span_hits)} 处同时发音超十度，弹不了（最宽 {interval_name(worst[2])}，"
+        issues.append(f"{len(span_hits)} 处同时发音跨度过大（最宽 {interval_name(worst[2])}，"
                       f"{worst[0]} 第 {worst[1]:.2f} 拍处）——需改转位或分解")
-        print(f"  ⚠ 超十度跨度 {len(span_hits)} 处（最宽 {interval_name(worst[2])}）")
+        print(f"  ⚠ 跨度过大 {len(span_hits)} 处（最宽 {interval_name(worst[2])}）")
 
     print(f"\n{'='*56}")
     if issues:
@@ -296,7 +303,7 @@ def fix(in_path, out_path):
     else:
         print("修后自检：重叠 0 处（收敛）")
     if span_hits:
-        print(f"⚠ 仍有 {len(span_hits)} 处同时发音超十度，Dorico 里要人工改成转位/分解")
+        print(f"⚠ 仍有 {len(span_hits)} 处同时发音跨度过大，Dorico 里要人工改成转位/分解")
     print(f"已导出: {out_path}")
     print("下一步：Dorico 导入这个文件 → 校对 → 存 .dorico / 出 PDF")
 

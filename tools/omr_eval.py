@@ -237,6 +237,42 @@ def align_measure(truth_evs, engine_evs):
     return pairs, t_un, e_un
 
 
+def _median_pitch(evs):
+    vals = []
+    for e in evs:
+        if not is_rest(e) and e.pitches:
+            vals.append(sum(e.pitches) / len(e.pitches))
+    return (sorted(vals)[len(vals) // 2] if vals else 0)
+
+
+def align_measure_by_part(truth_evs, engine_evs):
+    """按声部优先配对（2026-10-10 夜立，修混声部串配假象）。
+    两侧都 ≥2 声部时：按声部音域中位排序一一配对，组内走 align_measure；
+    否则回退混声部（单声部场景与旧行为一致）。
+    起因：BWV114 混声部贪心把引擎低音配到真值高音，58 处"八度差"实为 4。
+    """
+    from collections import OrderedDict as _OD
+    t_parts, e_parts = _OD(), _OD()
+    for t in truth_evs:
+        t_parts.setdefault(t.part, []).append(t)
+    for e in engine_evs:
+        e_parts.setdefault(e.part, []).append(e)
+    if len(t_parts) < 2 or len(e_parts) < 2:
+        return align_measure(truth_evs, engine_evs)
+    tp = sorted(t_parts.keys(), key=lambda k: _median_pitch(t_parts[k]))
+    ep = sorted(e_parts.keys(), key=lambda k: _median_pitch(e_parts[k]))
+    pairs, t_un, e_un = [], [], []
+    n = min(len(tp), len(ep))
+    for i in range(n):
+        p, tu, eu = align_measure(t_parts[tp[i]], e_parts[ep[i]])
+        pairs += p; t_un += tu; e_un += eu
+    for k in tp[n:]:
+        t_un += [x for x in t_parts[k] if not is_rest(x)]
+    for k in ep[n:]:
+        e_un += [x for x in e_parts[k] if not is_rest(x)]
+    return pairs, t_un, e_un
+
+
 def evaluate(truth_events, engine_events, label_truth='真值', label_engine='引擎',
              measure_range=None):
     """四级度量主函数。返回结果字典。measure_range=(lo,hi) 时只比该范围内的小节。"""
@@ -267,7 +303,7 @@ def evaluate(truth_events, engine_events, label_truth='真值', label_engine='�
     result['measures_only_engine'] = len(set(e_by_m) - set(t_by_m))
 
     for m in common:
-        pairs, t_un, e_un = align_measure(t_by_m[m], e_by_m[m])
+        pairs, t_un, e_un = align_measure_by_part(t_by_m[m], e_by_m[m])
         for t, e in pairs:
             tpc, epc = pc_set(t), pc_set(e)
             exact = (tpc == epc)

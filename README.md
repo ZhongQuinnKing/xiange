@@ -6,8 +6,8 @@
 
 给主流 AI 用的音乐能力包。姊妹篇：采诗读互联网、拾级陪人、玉尺量文章、本作弄音乐。
 
-练兵项目：《失眠》（~/Desktop/转谱/）。能力都在那里验证，产出全部归本包。
-失眠只是"练兵的小项目"，不是成果本身。
+能力验证：一个真实的钢琴编配项目全程走通（选曲／取源／转谱／出谱），产出全部归本包。
+项目本身不是成果，这套可复用的流程与工具才是。
 
 ## 流水线总览
 
@@ -27,6 +27,27 @@
 每一步都带来源与置信标注。
 出库闸：核过的才许标"已验证"，没核的一律标"待核对"。
 
+## 快速开始（含依赖）
+
+环境：Python 3.11（参考环境用 conda env music-transcribe）。依赖按工具分档，零依赖件装包即用：
+
+- 零依赖（仅标准库）：记谱两件（notation_check 体检／notation_fix 修复）——可直接跑
+- 需 music21：四级度量报告卡（omr_eval）、乐理关（theory_check）、分诊（triage）、体检修整（score_doctor）、共识系（consensus）
+- 渲染交付（vv_render／render_v4）与 kern 修复（bekern_fix）：需 verovio、cairosvg（bekern_fix 另需 PIL 与 music21）
+- 简谱腿（deliver_dolce）：需 playwright（无头浏览器）
+- 输入路由（工具_谱种路由）：需 opencv、numpy
+
+常用一条命令：
+
+- 记谱体检：`python3 tools/notation_check.py 谱.musicxml`
+- 谱面体检：`python3 tools/score_doctor.py inspect 谱.musicxml`
+- 谱种路由（入口）：`python3 tools/工具_谱种路由.py 谱图.png`，一张图先判谱种（五线谱／六线谱／简谱等），再走对应引擎与工序
+- 乐理体检：`python3 tools/theory_check.py 谱.musicxml`（声部交叉／平行五八度／跨度上限可调／密度骤降／时值）
+
+知识线：直接按 知识/90-音乐问答协议.md 的三层路径执行，零安装。
+
+源获取（复刻线）：依赖外部采诗通道（公开工具，见 docs/02 各站边界）；没有该通道时只处理本机已有文件，不静默降级。
+
 ## 目录
 
 - docs/  工序文档
@@ -35,23 +56,24 @@
   - 03-引擎链（SMT／oemer 现状与目标）
   - 04-质量体系（四道自动关＋人工关＋拒收线＋分级承诺）
   - 05-交付标准
-  - 06-实测记录
+  - 册-五线谱／册-简谱（按谱种的工序卡）
 - tools/  工具脚本
-  - 已入：复刻重测（remeasure：机器×手工一致度）、渲染交付（vv_render：MusicXML→SVG/PNG/PDF 一条龙，含 A4 版式与批量）、渲染对比（render_v4）、谱面体检（score_doctor：inspect 体检／fix 修整，fix 自带 .orig 备份与改动明细）、音频对拍（verify_vs_audio）、B站提页（bili_extract）、数字源验证三件套（verify）、多引擎共识（consensus／consensus2）、统一评价引擎（omr_eval：四级度量＋标准报告卡）、乐理错检器（theory_check：声部交叉／平行五八度／超十度／声部密度骤降／时值）、记谱规范两件（notation_check 检符杠分组／符干方向／休止符布局／谱表分配；notation_fix 为对应后处理：八分按拍两两连杠、符干 RH 上 LH 下，幂等）
-  - 自测：tools/tests/ 三套（test_omr_eval 五场景、test_theory_check 六病例、test_score_doctor 重叠判据与 fix 安全网），随时可复跑验证判据
+  - 已入：复刻重测（remeasure：机器×手工一致度）、渲染交付（vv_render：MusicXML→SVG/PNG/PDF 一条龙，含 A4 版式与批量）、渲染对比（render_v4）、谱面体检（score_doctor：inspect 体检／fix 修整，fix 自带 .orig 备份与改动明细）、音频对拍（verify_vs_audio）、B站提页（bili_extract）、数字源验证三件套（verify）、多引擎共识（consensus／consensus2）、统一评价引擎（omr_eval：四级度量＋标准报告卡）、乐理错检器（theory_check：声部交叉／平行五八度／跨度过大（默认上限大十三度，可调）／声部密度骤降／时值）、记谱规范两件（notation_check 检符杠分组／符干方向／休止符布局／谱表分配；notation_fix 为对应后处理：八分按拍两两连杠、符干 RH 上 LH 下，幂等）
+  - 自测：tools/tests/ 五套（test_omr_eval 五场景、test_theory_check 六病例、test_score_doctor 重叠判据与 fix 安全网、test_triage、test_same_name_parts 同名声部防塌陷），随时可复跑验证判据
 - SKILL.md  技能入口（给 AI 装包的总说明；两条能力线分流）
 - 知识/  音乐知识底座（九域十六份约十万字：乐理记谱／和声／曲式／复调／配器／编配即兴／风格体系／世界音乐／音乐史／音乐教育，＋问答协议与动态档；入口见 知识/_总纲.md）
 
-## 现状（2026-10-10 首日）
+## 现状（2026-10-12）
 
 已验证：
-- 数字源路：《失眠》1181 音 100% 到谱（分布相似 0.987、零偏移对齐、抽核吻合）
+- 数字源路：钢琴编配项目全曲 1181 音 100% 到谱（分布相似 0.987、零偏移对齐、抽核吻合）
 - B站链：歌名 → 搜索 → 视频下载 → 19 页全曲提谱（免登录、全自动）
-- 质量闸门：oemer 的废品被时值自检拦下并量化（89% 错）
+- 引擎链（无数字源转谱）：多引擎共识链打通（SMT／homr／Audiveris 三路互补，docs/03），全谱集批量实测落定
+- 质量闸门：旧错误逐类对账、拦截机制上线（docs/04）；废品件被自检拦下并量化
 
-未到位（当前主攻）：
-- 引擎链（无数字源时的转谱）：SMT 待修通；oemer 实测不合格
-- 符号层回填、Dorico 精排
+在办（边界如实）：
+- 符号层回填、Dorico 精排：按 docs/05 工序执行，自动化程度逐件推进
+- 谱种线扩展：简谱／六线谱／工尺／古琴等分册在册，覆盖逐线扩展
 
 ## 边界与合规
 

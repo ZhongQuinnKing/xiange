@@ -200,15 +200,19 @@ def check_part(part, part_index, staves_declared, part_name):
         # 判据：期望组内各音的 onset 须落在同一条符杠链里（组内被连住即可；
         # 连成了跨拍长链属分组问题，归 N1b 轻项，不重复报严重）
         chains, orphans = _xml_chains(seq)
-        chain_keys = {tuple(round(e['onset'], 4) for e in c) for c in chains}
+        # 修复（2026-10-10，二级流行歌件实录误报）：原链索引键＝(onset) 跨声部互踩——
+        # RH 与 LH 在同一 onset 各起一条链时，后入者覆盖先入者，另一声部的期望组必然
+        # "找不到自己的链"而报假阳性 N1a（双 staff 件、LH 含八分链时必炸）。键改 (voice, staff, onset)。
+        def _ev_key(e):
+            return (e['voice'], e['staff'], round(e['onset'], 4))
         onset_chain = {}
-        for ck in chain_keys:
-            for o in ck:
-                onset_chain[o] = ck
+        for c in chains:
+            for e in c:
+                onset_chain[_ev_key(e)] = c
         for g in expected:
-            key = tuple(round(e['onset'], 4) for e in g)
-            ck = onset_chain.get(key[0]) if key else None
-            if not (ck is not None and all(o in ck for o in key)):
+            ck = onset_chain.get(_ev_key(g[0])) if g else None
+            ck_keys = {_ev_key(e) for e in ck} if ck else set()
+            if not all(_ev_key(e) in ck_keys for e in g):
                 if has_lyrics:
                     continue   # 声乐谱按字分杠合法，不报（已在卡脚注声明）
                 beat = int((g[0]['onset'] / div) // unit_q) + 1

@@ -72,7 +72,7 @@ TOL = 0.005        # 拍级容差（1/64 音符 = 0.0156 拍，取其三成）
 MIN_TICK = 1       # 一个 duration 单位（divisions 粒度）
 
 CODE_NAME = {'W2': '小节时值', 'W1': '声部重叠', 'E1': '声部交叉',
-             'E2': '和弦音集', 'E3': '平行五八度', 'E4': '超十度'}
+             'E2': '和弦音集', 'E3': '平行五八度', 'E4': '跨度过大'}
 
 
 # ══════════════════════ 谱面统计（与 theory_check W2 同口径） ══════════════════════
@@ -116,8 +116,15 @@ def collect_stats(score):
     """
     out = OrderedDict()
     prev_ts = None
+    _seen = {}
     for ps in score.parts:
         name = ps.partName or ps.id
+        # [本地适配 2026-10-11] 同名声部防键塌陷（out[(name, 小节)] 会互相覆盖）
+        if str(name) in _seen:
+            _seen[str(name)] += 1
+            name = f'{name}#{_seen[str(name)]}'
+        else:
+            _seen[str(name)] = 1
         first = True
         for meas in ps.getElementsByClass('Measure'):
             els = list(meas.recurse().notesAndRests)
@@ -243,7 +250,7 @@ def advice_for(code, st, desc):
         return ('人裁：抽验该处（骨架一个声部里并了两条线时，重叠是转写所致，'
                 '不是真错；确认后按并轨拆声部或放行）')
     if code == 'E4':
-        return '人裁：同拍跨度超十度，钢琴上手够不着——改转位或分解，或确认为八度误判'
+        return '人裁：同拍跨度过大超默认可及，钢琴上难够到——改转位或分解，或确认为八度误判'
     if code == 'E3':
         return '人裁：平行五八度，流行织体里可能是有意的（听感判断；[?] 本卡不裁艺术）'
     if code == 'E1':

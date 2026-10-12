@@ -29,6 +29,9 @@ def char_ok(ch):
     if 0x4E00 <= cp <= 0x9FFF: return True   # CJK
     if 0x3040 <= cp <= 0x30FF: return True   # 日文假名（专名/术语）
     if 0x00C0 <= cp <= 0x024F: return True   # 拉丁扩展（外文人名）
+    if 0x1EA0 <= cp <= 0x1EFF: return True   # 越南文扩展（曲名/专名，2026-10-11 误报修复）
+    if cp == 0x00A7: return True             # §（章节引用号，2026-10-11 误报修复）
+    if 0x02B0 <= cp <= 0x02FF: return True   # 间距修饰字母（ʻ ʿ 等转写符号，2026-10-11 误报修复）
     if 0x3000 <= cp <= 0x303F: return True   # 中文标点
     if 0xFF00 <= cp <= 0xFFEF: return True   # 全角
     if 0x2160 <= cp <= 0x217F: return True   # 罗马数字

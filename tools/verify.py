@@ -127,6 +127,21 @@ def cmd_align(args):
     print('（Jaccard 受对照源自身精度封顶，是下界指标）')
 
 
+def cmd_checklist(args):
+    """三件套自查（2026-10-11 加）：报「哪几件能跑、还缺什么」，免静默降级。"""
+    f = args.file
+    second = getattr(args, 'other', None)
+    print('数字源三件套·自查')
+    print(f'  ① 元数据核对：可跑    verify.py metadata "{f}"')
+    if second:
+        print(f'  ② 分布对拍：可跑      verify.py dist "{f}" "{second}"')
+        print(f'  ③ 逐小节对齐：可跑    verify.py align "{f}" "{second}"')
+    else:
+        print('  ② 分布对拍：未跑——需第二来源（同曲另一数字源或切片真值）；单文件输入时此项留缺')
+        print('  ③ 逐小节对齐：未跑——同上，另需拍号与速度已知')
+    print('  门槛：三件全过才可标「初验通过」；未跑的件如实留缺，不静默降级。')
+
+
 def main():
     ap = argparse.ArgumentParser(description='数字源验证三件套')
     sub = ap.add_subparsers(dest='cmd', required=True)
@@ -149,6 +164,11 @@ def main():
     p3.add_argument('--bars', type=int, default=56)
     p3.add_argument('--bpm', type=float, default=68.0)
     p3.set_defaults(func=cmd_align)
+
+    p4 = sub.add_parser('checklist', help='三件套自查（报哪几件能跑、缺什么）')
+    p4.add_argument('file')
+    p4.add_argument('--other', default=None, help='第二来源；给了则报后两件可跑')
+    p4.set_defaults(func=cmd_checklist)
 
     args = ap.parse_args()
     args.func(args)

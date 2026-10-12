@@ -197,7 +197,24 @@ _OLD_BEAM = re.compile(r'[ \t]*<beam\b[^>]*>[^<]*</beam>[ \t]*\n')
 
 
 def _edit_block(block, stem, beams):
-    """重建单个 <note> 块：先清旧 stem/beam 行，再按方案插入。"""
+    """重建单个 <note> 块：先清旧 stem/beam 行，再按方案插入。
+    2026-10-10 夜修（隔离验证抓出）：单行格式（整元素一行、紧凑生成器常见）走行内手术——
+    旧逻辑假定块末行是独立闭合行，单行块下会把 stem/beam 插到 note 元素之外（静默写坏、不幂等）。"""
+    if '\n' not in block.strip():
+        s = re.sub(r'<stem>[^<]*</stem>', '', block)
+        s = re.sub(r'<beam\b[^>]*>[^<]*</beam>', '', s)
+        if stem is None and not beams:
+            return s
+        beam_s = ''.join(f'<beam number="{num}">{val}</beam>' for num, val in beams)
+        if '<staff>' in s:
+            # 按 DTD 顺序：stem 在 staff 前、beam 在 staff 后
+            if stem:
+                s = s.replace('<staff>', f'<stem>{stem}</stem><staff>', 1)
+            if beam_s:
+                s = re.sub(r'(<staff>[^<]*</staff>)', lambda mm: mm.group(1) + beam_s, s, count=1)
+            return s
+        ins = (f'<stem>{stem}</stem>' if stem else '') + beam_s
+        return s.replace('</note>', ins + '</note>', 1)
     stripped = _OLD_BEAM.sub('', _OLD_STEM.sub('', block))
     if stem is None and not beams:
         return stripped
