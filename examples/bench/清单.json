@@ -1,0 +1,61 @@
+{
+ "version": 1,
+ "note": "九九钉一：样例全部合成自造；本包验流程可复现，不承诺准确率数字。",
+ "pieces": [
+  {
+   "file": "基准01_单旋律八十六分.musicxml",
+   "probe": "探符杠分组、符干方向",
+   "kind": "clean"
+  },
+  {
+   "file": "基准02_旋律加伴奏两手.musicxml",
+   "probe": "探谱表分配、声部归属",
+   "kind": "clean"
+  },
+  {
+   "file": "基准03_复拍子六八.musicxml",
+   "probe": "探复拍子按附点单位分组",
+   "kind": "clean"
+  },
+  {
+   "file": "基准04_合唱缩谱四声部.musicxml",
+   "probe": "探多声部密度与归属核对",
+   "kind": "clean"
+  },
+  {
+   "file": "基准05_附点切分单声部.musicxml",
+   "probe": "探减时线、附点、空拍",
+   "kind": "clean"
+  },
+  {
+   "file": "基准06_变化音单声部.musicxml",
+   "probe": "探八度点与调号呈现",
+   "kind": "clean"
+  },
+  {
+   "file": "基准07_钢琴两手小品.musicxml",
+   "probe": "探左右手分离与跨声部串配",
+   "kind": "clean"
+  },
+  {
+   "file": "基准08_钢琴切分织体.musicxml",
+   "probe": "探时值级（总长错与切分错分开计）",
+   "kind": "clean"
+  },
+  {
+   "file": "基准09_三重奏缩谱三行.musicxml",
+   "probe": "探行数与谱表分配",
+   "kind": "clean"
+  },
+  {
+   "file": "基准10_四重奏缩谱.musicxml",
+   "probe": "探四声部归属与符干约定",
+   "kind": "clean"
+  },
+  {
+   "file": "基准11_瑕疵校准副件.musicxml",
+   "probe": "校准不漏报：末小节净多一拍（预期报错）",
+   "kind": "defect"
+  }
+ ]
+}

@@ -24,3 +24,5 @@ jobs:
             echo "== $f"
             python "$f"
           done
+      - name: Run bench probe pack (eleven pieces)
+        run: python tools/bench_run.py

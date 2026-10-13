@@ -1,0 +1,83 @@
+{
+ "version": 1,
+ "note": "定版快照（工具升级重跑时差异入版本记录）",
+ "cases": {
+  "基准01_单旋律八十六分.musicxml": {
+   "notation_sev": 0,
+   "notation_light": 0,
+   "theory_sev": 0,
+   "theory_light": 0,
+   "doctor_issues": 0
+  },
+  "基准02_旋律加伴奏两手.musicxml": {
+   "notation_sev": 0,
+   "notation_light": 0,
+   "theory_sev": 0,
+   "theory_light": 0,
+   "doctor_issues": 0
+  },
+  "基准03_复拍子六八.musicxml": {
+   "notation_sev": 0,
+   "notation_light": 0,
+   "theory_sev": 0,
+   "theory_light": 0,
+   "doctor_issues": 0
+  },
+  "基准04_合唱缩谱四声部.musicxml": {
+   "notation_sev": 0,
+   "notation_light": 0,
+   "theory_sev": 0,
+   "theory_light": 0,
+   "doctor_issues": 0
+  },
+  "基准05_附点切分单声部.musicxml": {
+   "notation_sev": 0,
+   "notation_light": 0,
+   "theory_sev": 0,
+   "theory_light": 0,
+   "doctor_issues": 0
+  },
+  "基准06_变化音单声部.musicxml": {
+   "notation_sev": 0,
+   "notation_light": 0,
+   "theory_sev": 0,
+   "theory_light": 0,
+   "doctor_issues": 0
+  },
+  "基准07_钢琴两手小品.musicxml": {
+   "notation_sev": 0,
+   "notation_light": 0,
+   "theory_sev": 0,
+   "theory_light": 0,
+   "doctor_issues": 0
+  },
+  "基准08_钢琴切分织体.musicxml": {
+   "notation_sev": 0,
+   "notation_light": 0,
+   "theory_sev": 0,
+   "theory_light": 0,
+   "doctor_issues": 0
+  },
+  "基准09_三重奏缩谱三行.musicxml": {
+   "notation_sev": 0,
+   "notation_light": 0,
+   "theory_sev": 0,
+   "theory_light": 0,
+   "doctor_issues": 0
+  },
+  "基准10_四重奏缩谱.musicxml": {
+   "notation_sev": 0,
+   "notation_light": 0,
+   "theory_sev": 0,
+   "theory_light": 0,
+   "doctor_issues": 0
+  },
+  "基准11_瑕疵校准副件.musicxml": {
+   "notation_sev": 1,
+   "notation_light": 0,
+   "theory_sev": 0,
+   "theory_light": 1,
+   "doctor_issues": 0
+  }
+ }
+}

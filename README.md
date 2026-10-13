@@ -109,6 +109,7 @@
 | 复测_四页分类隔离.py | 分类层隔离复测 | — | 评估件 |
 
   - 自测：tools/tests/ 十三套（原六套：test_omr_eval 五场景、test_theory_check 六病例、test_score_doctor 重叠判据与 fix 安全网、test_triage、test_same_name_parts 同名声部防塌陷、test_notation 记谱两件最小闭环与幂等；新增七套：test_integration 六小节端到端过三检器、test_bekern_fix 归一化、test_remeasure 分桶与滤除、test_verify 度量与冒烟、test_deliver_dolce 依赖守卫与 CLI 契约、test_export_pack 出包契约与坏源 fail-closed、test_yuchi_score_check 谱面规范查对五场景与误报边界），随时可复跑验证判据；另有过闸轻量静态查（ruff E9,F）
+- examples/bench/  公开基准样例包（十一首合成谱例＋清单＋定版预期；跑批 `python3 tools/bench_run.py`）。样例全部自造，验「流程可复现」，不承诺准确率数字
 - SKILL.md  技能入口（给 AI 装包的总说明；两条能力线分流）
 - CHANGELOG.md  更新日志（版本制度与版本史）
 - CONTRIBUTING.md  贡献指南（含版权审查节）
