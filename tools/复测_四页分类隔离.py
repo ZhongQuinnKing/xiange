@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-# 甲路复测·四页分类层隔离测试（2026-10-10）
-# 目的：不发检测链，直接用甲路模型对泛化轮存下的 crops_raw 逐框分类，
-#       与旧模型（auto-dapu 203 类）的 top-1 置信度与答案并排对比。
-# 输入：泛化轮_古琴auto-dapu/输出/{页}/crops_raw/*.png + sequence.json（旧结果）
-# 输出：复测_分类对比.csv + 汇总（含中位置信度与基线倍数）
+# -*- coding: utf-8 -*-
+# 分类层隔离复测（2026-10-10）
+# 用法：先设环境变量，再 python 复测_四页分类隔离.py
+#   JIALU_SELF 古琴自训工作根；JIALU_GEN 古琴引擎输出根（缺省即报错，无个人路径兜底）
+# 依赖：opencv、torch、torchvision
+# 许可：MIT（随仓 LICENSE.md）
 import csv
 import json
 import os
@@ -11,8 +12,13 @@ import sys
 import statistics
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SELF = os.environ.get('JIALU_SELF', os.path.expanduser('~/Desktop/音乐数据/古琴自训（包内副本须以 JIALU_SELF 覆盖）'))
-GEN = os.environ.get('JIALU_GEN', os.path.expanduser('~/Desktop/音乐数据/古琴引擎输出（包内副本须以 JIALU_GEN 覆盖）'))
+SELF = os.environ.get('JIALU_SELF')
+GEN = os.environ.get('JIALU_GEN')
+if not SELF or not GEN:
+    sys.stderr.write(
+        '缺环境变量：JIALU_SELF（古琴自训工作根）与 JIALU_GEN（古琴引擎输出根）\n'
+        '（训练口径见内部档《古琴自训_训练配方与口径》）\n')
+    sys.exit(2)
 sys.path.insert(0, os.path.join(SELF, 'SuziOMR', 'baseline'))
 sys.path.insert(0, os.path.join(SELF, 'gui-tools'))
 
@@ -22,7 +28,8 @@ import torchvision.transforms as transforms  # noqa: E402
 from image_manipulation import shrink, paste_to_square  # noqa: E402
 from model import CnnModel  # noqa: E402
 
-PAGES = ['guanshanyue_1', 'guangling_1', 'gaoshan_1', 'shishang_1', '对照_首测A页_guoqinwang_1']
+# 页目清单经命令行传入（--pages a b c），不带个人数据实名单
+PAGES = []
 
 
 def eval_tf(size=48):
@@ -35,10 +42,19 @@ def eval_tf(size=48):
 
 
 def main():
+    global PAGES
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument('--model', default=None, help='模型 std 路径（缺省取最近一次 jialu_*.std）')
+    ap.add_argument('--pages', nargs='+', default=None,
+                    help='页目录名清单（对应 JIALU_GEN 下的子目录）')
     args = ap.parse_args()
+
+    if args.pages:
+        PAGES = args.pages
+    if not PAGES:
+        sys.stderr.write('缺页清单：用 --pages a b c 指定（对应 JIALU_GEN 下子目录）\n')
+        sys.exit(2)
 
     if args.model:
         mpath = args.model

@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
-# 甲路自训·guqinMM 树 → 结构化类名 转换器 v3（2026-10-10）
-# v3 相对 v2：数字对合并（⿱(5,6)→"56" 五徽六分；⿱(10,2)→"102"）。结构感知抽取。
-# 输出：v3 产出 CSV（image, classname, code, split）+ 统计
-# 标签格式：{前缀_}{左字+徽分}{后缀}_{右字+弦} / {前缀_}散音_{右字+弦} / {前缀_}{右字+弦}
-# 与 auto-dapu 格式同构（如 夕108_勾3 / 大8上_綽_勾4 / 散音_挑5 / 注_勾4）
+# 古琴自训·减字树 → 结构化类名 转换器 v3（2026-10-10）
+# 用法：先设环境变量，再 python 树转换器_v3.py
+#   GUQINMM_BASE 数据集根（jzp）；AUTODAPU_CSV 数据表路径（缺省即报错，无个人路径兜底）
+# 输出：CSV（image, classname, code, split）＋统计
+# 标签格式（古琴减字记谱规则）：{前缀_}{左字+徽分}{后缀}_{右字+弦} / {前缀_}散音_{右字+弦} / {前缀_}{右字+弦}
+# 许可：MIT（随仓 LICENSE.md）
 
 import ast
 import collections
 import csv
 import os
+import sys
 
-BASE = os.path.expanduser('~/Desktop/AI工具/guqinMM/guqin_jzp/JZPNet/data/jzp')
+BASE = os.environ.get('GUQINMM_BASE')
+AUTODAPU_CSV = os.environ.get('AUTODAPU_CSV')
 OUT_DIR = os.path.dirname(os.path.abspath(__file__))
 ARITY = {'⿱': 2, '⿰': 2, '⿸': 2, '⿺': 2, '⿹': 2, '⿲': 3, '⿳': 3}
 
@@ -141,9 +144,13 @@ def extract(tree):
 
 
 def main():
+    if not BASE or not AUTODAPU_CSV:
+        sys.stderr.write(
+            '缺环境变量：GUQINMM_BASE（数据集根 jzp）与 AUTODAPU_CSV（数据表路径）\n')
+        sys.exit(2)
     splits = ['wushen_train', 'test', 'wushen_1', 'wushen_aug', 'zyt']
     ada = set()
-    for r in csv.DictReader(open(os.path.expanduser('~/Desktop/AI工具/guqin-auto-dapu/data/data.csv'), encoding='cp932')):
+    for r in csv.DictReader(open(AUTODAPU_CSV, encoding='cp932')):
         ada.add(r['radical_name'])
     rows = []
     grand = collections.Counter()

@@ -1,10 +1,12 @@
 #!/usr/bin/env python
-# 甲路自训·训练驱动（2026-10-10）
-# 口径：SuziOMR 原版配方（CnnModel 48x48 / FocalLoss gamma=1 / Adam amsgrad lr1e-3 / batch 100 / 80 轮 + 温度标定）
-# 数据：训练集/（train 4,302 / val 173；cross 95 留作跨书测试，不参与训练）
+# -*- coding: utf-8 -*-
+# 古琴自训·训练驱动（2026-10-10）
 # 用法：
+#   先设 JIALU_SELF（古琴自训工作根；缺省即报错）
 #   干跑：python 驱动_甲路_训练.py --dry-run
 #   全量：python 驱动_甲路_训练.py --epochs 80
+# 依赖：opencv、numpy、torch、torchvision
+# 许可：MIT（随仓 LICENSE.md）
 import argparse
 import copy
 import csv
@@ -15,7 +17,11 @@ import sys
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SELF = os.environ.get('JIALU_SELF', os.path.expanduser('~/Desktop/音乐数据/古琴自训（包内副本须以 JIALU_SELF 覆盖）'))
+SELF = os.environ.get('JIALU_SELF')
+if not SELF:
+    sys.stderr.write(
+        '缺环境变量：JIALU_SELF（古琴自训工作根，含 SuziOMR/baseline 与 gui-tools）\n')
+    sys.exit(2)
 sys.path.insert(0, os.path.join(SELF, 'SuziOMR', 'baseline'))
 sys.path.insert(0, os.path.join(SELF, 'gui-tools'))
 
