@@ -1,3 +1,3 @@
-# 弦歌 · 自测档（tools/tests 十二套＋轻量静态查；CI 同款）
+# 弦歌 · 自测档（tools/tests 十三套＋轻量静态查；CI 同款）
 -r requirements.txt
 ruff

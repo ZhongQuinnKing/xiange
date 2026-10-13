@@ -44,7 +44,7 @@
     bash install.sh core        # 按档装：core / render / browser / vision / all
     bash install.sh all         # 四档全装
 
-自测（判据级十二套，与 CI 同款）：
+自测（判据级十三套，与 CI 同款）：
 
     for f in tools/tests/test_*.py; do python3 "$f"; done
 
@@ -57,6 +57,7 @@
 - 谱种路由（入口）：`python3 tools/工具_谱种路由.py 谱图.png`，一张图先判谱种（五线谱／六线谱／简谱等），再走对应引擎与工序
 - 乐理体检：`python3 tools/theory_check.py 谱.musicxml`（声部交叉／平行五八度／跨度上限可调／密度骤降／时值）
 - 成品出包：`python3 tools/export_pack.py 谱.musicxml --out 目录 --title 曲名`（五线谱三件＋mxl／mid＋简谱三件＋试听＋成品卡＋zip）
+- 谱面规范查对：`python3 tools/yuchi_score_check.py 谱.musicxml`（谱面规范查对：小节对账／附点越界／连音线闭合／变音记号；只诊断不改谱，与记谱体检分工见规则档）
 
 知识线：直接按 知识/90-音乐问答协议.md 的三层路径执行，零安装。
 
@@ -83,6 +84,7 @@
 | 工具 | 用途 | 依赖档 | 备注 |
 |---|---|---|---|
 | notation_check.py | 记谱规范检器（符杠／符干／休止／谱表） | 零依赖 | |
+| yuchi_score_check.py | 谱面规范查对（小节对账／附点／连音线／变音记号；只诊断） | 零依赖 | 与记谱体检分工见 docstring |
 | notation_fix.py | 记谱规范后处理（幂等） | 零依赖 | |
 | omr_eval.py | 统一评价引擎（四级度量＋标准报告卡） | 核心 | 口径见 docs/06 |
 | theory_check.py | 乐理错检器（声部交叉／平行五八度／跨度／密度／时值） | 核心 | 跨度上限可调 |
@@ -106,7 +108,7 @@
 | 驱动_甲路_训练.py | 自训线训练驱动 | — | 训练类 |
 | 复测_四页分类隔离.py | 分类层隔离复测 | — | 评估件 |
 
-  - 自测：tools/tests/ 十二套（原六套：test_omr_eval 五场景、test_theory_check 六病例、test_score_doctor 重叠判据与 fix 安全网、test_triage、test_same_name_parts 同名声部防塌陷、test_notation 记谱两件最小闭环与幂等；新增六套：test_integration 六小节端到端过三检器、test_bekern_fix 归一化、test_remeasure 分桶与滤除、test_verify 度量与冒烟、test_deliver_dolce 依赖守卫与 CLI 契约、test_export_pack 出包契约与坏源 fail-closed），随时可复跑验证判据；另有过闸轻量静态查（ruff E9,F）
+  - 自测：tools/tests/ 十三套（原六套：test_omr_eval 五场景、test_theory_check 六病例、test_score_doctor 重叠判据与 fix 安全网、test_triage、test_same_name_parts 同名声部防塌陷、test_notation 记谱两件最小闭环与幂等；新增七套：test_integration 六小节端到端过三检器、test_bekern_fix 归一化、test_remeasure 分桶与滤除、test_verify 度量与冒烟、test_deliver_dolce 依赖守卫与 CLI 契约、test_export_pack 出包契约与坏源 fail-closed、test_yuchi_score_check 谱面规范查对五场景与误报边界），随时可复跑验证判据；另有过闸轻量静态查（ruff E9,F）
 - SKILL.md  技能入口（给 AI 装包的总说明；两条能力线分流）
 - CHANGELOG.md  更新日志（版本制度与版本史）
 - CONTRIBUTING.md  贡献指南（含版权审查节）
