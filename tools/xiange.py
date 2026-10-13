@@ -71,8 +71,12 @@ def doctor(json_out=False):
     else:
         checks.append(('外部引擎', 'SMT（SMT_ROOT）', 'warn',
                        'export SMT_ROOT=<SMT 仓目录>（外部引擎非 pip 依赖，接入见 docs/03）'))
-    hv = subprocess.run(['uvx', '--version'], capture_output=True, text=True)
-    checks.append(('外部引擎', 'homr（uvx）', 'ok' if hv.returncode == 0 else 'warn',
+    try:
+        hv = subprocess.run(['uvx', '--version'], capture_output=True, text=True)
+        uvx_ok = hv.returncode == 0
+    except FileNotFoundError:
+        uvx_ok = False  # 未装 uv：环境缺件归"注意"档，不当崩溃（2026-10-13 CI 首跑实录）
+    checks.append(('外部引擎', 'homr（uvx）', 'ok' if uvx_ok else 'warn',
                    '装 uv 后 `uvx homr --help` 自证；见 docs/引擎版本表'))
     checks.append(('外部引擎', 'oemer', 'info' if not os.environ.get('OEMER_ROOT') else 'ok',
                    '独立 venv 安装，路径经 OEMER_ROOT 指定（见 docs/03）'))
