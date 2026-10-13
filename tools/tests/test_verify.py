@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""回归用例：verify 三件套的核心纯函数（直方图／小节聚合／tempo 兜底）与 CLI 冒烟，批二 X4 补。
+"""回归用例：verify 三件套的核心纯函数（直方图／小节聚合／tempo 兜底）与 CLI 冒烟。
 
 需核心档（music21、numpy）；缺则如实跳过。跑法：python3 test_verify.py
 """

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""gen_bench — 公开基准样例包生成器（2026-10-13 立，批二 Y1 实装）
+"""gen_bench — 公开基准样例包生成器（2026-10-13 立）
 
-遵 97 钉一：公开样例一律合成、自造（版权与守清单双重纪律）。
+遵发布纪律：公开样例一律合成、自造（版权与许可双重纪律）。
 十一首（十首主档＋一首瑕疵校准副件），三组覆盖五线谱各常见语境；
 每首是「探针」不是作品：简单、干净、可控为先。
 
@@ -355,7 +355,7 @@ def main():
                          'kind': 'defect' if name.endswith('瑕疵校准副件') else 'clean'})
         print(f'生成 {os.path.basename(path)}')
     with open(os.path.join(args.out, '清单.json'), 'w', encoding='utf-8') as fh:
-        json.dump({'version': 1, 'note': '九九钉一：样例全部合成自造；本包验流程可复现，不承诺准确率数字。',
+        json.dump({'version': 1, 'note': '样例全部合成自造；本包验流程可复现，不承诺准确率数字。',
                    'pieces': manifest}, fh, ensure_ascii=False, indent=1)
     print(f'共 {len(manifest)} 首 → {args.out}')
     return 0

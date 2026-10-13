@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""engine_runner — 引擎抽象层统一入口（2026-10-13 立，批二 W1 实装）
+"""engine_runner — 引擎抽象层统一入口（2026-10-13 立）
 
-一个入口、一份配置：图入 XML 出，引擎切换只改配置。设计件见内部
-《引擎抽象层_设计案_v0》（接口草案、版本锁、六器配置表、试点计划）。
+一个入口、一份配置：图入 XML 出，引擎切换只改配置。
 
     python3 tools/engine_runner.py <输入> --engine <名> --out <目录> [--params k=v ...]
 
@@ -14,8 +13,8 @@
 v0 在役：smt（本机仓 + PRAIG 权重）、homr（uvx 隔离缓存）。
 备位：oemer／audiveris／tabomr／orpheus 与 smt-next（候批切换，主线位不动）。
 
-环境变量（可覆盖默认，不写死个人路径）：
-  SMT_ROOT   SMT 仓根（默认 ~/Desktop/AI/工具/AI工具/SMT）
+环境变量（SMT_ROOT 必填，缺省即报错）：
+  SMT_ROOT   SMT 仓根（必填）
   SMT_WEIGHTS  权重目录（默认 <SMT_ROOT>/weights/smt-fp-grandstaff）
   SMT_PY   运行 SMT 的解释器（默认 <SMT_ROOT>/.venv/bin/python，缺则报缺）
 """
@@ -109,12 +108,14 @@ def kern_to_musicxml(kern_text, out_xml):
 def smt_precheck(inp):
     if os.path.isdir(inp):
         raise Reject('SMT 只收单页单系统图；目录输入请先切行')
-    smt_root = os.environ.get('SMT_ROOT', os.path.expanduser('~/Desktop/AI/工具/AI工具/SMT'))
+    smt_root = os.environ.get('SMT_ROOT')
+    if not smt_root:
+        raise EnvError('SMT_ROOT 未设置（必填，指向 SMT 仓根）')
     py = os.environ.get('SMT_PY', os.path.join(smt_root, '.venv', 'bin', 'python'))
     if not os.path.exists(py):
-        raise EnvError(f'SMT 解释器不存在：{py}（可设 SMT_PY 覆盖）')
+        raise EnvError(f'SMT 解释器不存在：{py}（可设 SMT_PY 指定）')
     if not os.path.isdir(smt_root):
-        raise EnvError(f'SMT 仓不存在：{smt_root}（可设 SMT_ROOT 覆盖）')
+        raise EnvError(f'SMT 仓不存在：{smt_root}（检查 SMT_ROOT）')
     return smt_root, py
 
 

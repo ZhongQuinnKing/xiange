@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""回归用例：deliver_dolce 的依赖守卫与命令行契约，批二 X4 补。
+"""回归用例：deliver_dolce 的依赖守卫与命令行契约。
 
 浏览器档在 CI 不装，本用例覆盖两面：无依赖时 fail-closed（清晰报缺、非零退出，
 不许裸崩在 import）；有依赖时 CLI 契约稳定（互斥组与必填项）。

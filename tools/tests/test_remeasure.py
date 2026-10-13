@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""回归用例：remeasure 的三件纯函数（CREPE 分桶与滤除／手工行解析／页展开），批二 X4 补。
+"""回归用例：remeasure 的三件纯函数（CREPE 分桶与滤除／手工行解析／页展开）。
 
 只依赖标准库。跑法：python3 test_remeasure.py
 """

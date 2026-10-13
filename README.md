@@ -102,8 +102,8 @@
 | verify.py | 数字源验证三件套 | 核心 | 教程见 docs/08 |
 | verify_vs_audio.py | 机器与谱面音频对拍 | 核心 | 下界指标 |
 | consensus.py | 多引擎共识融合 | 核心 | |
-| consensus2.py | 共识 v2（质量加权＋闸门分流） | 核心 | 原型件 |
-| consensus2_note.py | 音符级对比试算 | 核心 | 原型件 |
+| consensus2.py | 共识 v2（质量加权＋闸门分流） | 核心 | |
+| consensus2_note.py | 音符级对比试算 | 核心 | |
 | remeasure.py | 一键重测（机器×手工一致度） | 核心 | |
 | music_check.py | 知识库定时质检 | 核心 | |
 | vv_render.py | 交付主链：MusicXML 到 SVG／PNG／PDF | 渲染 | A4 版式与批量 |
