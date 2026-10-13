@@ -313,16 +313,19 @@ if __name__ == '__main__':
         print(__doc__)
         sys.exit(2)
     cmd = sys.argv[1]
+    if cmd not in ('inspect', 'fix'):
+        print(__doc__)
+        sys.exit(2)
     json_path = None
     if '--json' in sys.argv:
         i = sys.argv.index('--json')
         json_path = sys.argv[i + 1] if len(sys.argv) > i + 1 else None
         del sys.argv[i:i + 2]
+    # 缺文件统一 rc=2 干净报错（inspect/fix 两路同规，2026-10-13）
+    if not os.path.exists(sys.argv[2]):
+        sys.stderr.write(f'读谱失败：{sys.argv[2]} 不存在（参数为 MusicXML/MIDI 文件路径）\n')
+        sys.exit(2)
     if cmd == 'inspect':
-        import os as _os
-        if not _os.path.exists(sys.argv[2]):
-            sys.stderr.write(f'读谱失败：{sys.argv[2]} 不存在（参数为 MusicXML 文件路径）\n')
-            sys.exit(2)
         msgs = inspect(sys.argv[2])
         if json_path:
             import json as _json
@@ -331,8 +334,5 @@ if __name__ == '__main__':
                             'verdict': 'suspect' if msgs else 'clean'},
                            f, ensure_ascii=False, indent=1)
             print(f'（JSON 已写 {json_path}）')
-    elif cmd == 'fix':
-        fix(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else 'out.musicxml')
     else:
-        print(__doc__)
-        sys.exit(2)
+        fix(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else 'out.musicxml')

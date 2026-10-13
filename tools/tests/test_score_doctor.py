@@ -11,6 +11,7 @@
   2 小节内真重叠（全音符横跨四分音起点）→ 报 1 处
   3 fix 真重叠件 → 截短 1 处、修后收敛、.orig 备份 + .changes.txt 明细齐
   4 fix 无重叠件 → 0 截短、不出去重叠明细（旧版跨小节误截 21 处）
+  5-7 CLI 契约：缺参／inspect 缺文件／fix 缺文件 → rc=2 干净报错（2026-10-13 统一）
 
 用法: python3 test_score_doctor.py
 """
@@ -119,6 +120,25 @@ def main():
         no_trim = (not os.path.exists(log2)) or ('[去重叠]' not in open(log2, encoding='utf-8').read())
         check('fix 无重叠件 0 截短', no_trim,
               '明细文件=' + ('无' if not os.path.exists(log2) else '有且无去重叠条目'))
+
+        # 5-7 CLI 契约：缺参／缺文件每路 rc=2 干净报错（2026-10-13 统一）
+        import subprocess
+        script = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'score_doctor.py')
+        nope = os.path.join(tmp, 'nope.musicxml')
+
+        r = subprocess.run([sys.executable, script], capture_output=True, text=True, timeout=120)
+        check('CLI 缺参 rc=2', r.returncode == 2 and '用法' in (r.stdout + r.stderr),
+              f'rc={r.returncode}')
+
+        r = subprocess.run([sys.executable, script, 'inspect', nope],
+                           capture_output=True, text=True, timeout=120)
+        check('CLI inspect 缺文件 rc=2', r.returncode == 2 and '读谱失败' in (r.stdout + r.stderr)
+              and 'Traceback' not in (r.stdout + r.stderr), f'rc={r.returncode}')
+
+        r = subprocess.run([sys.executable, script, 'fix', nope, os.path.join(tmp, 'o.musicxml')],
+                           capture_output=True, text=True, timeout=120)
+        check('CLI fix 缺文件 rc=2', r.returncode == 2 and '读谱失败' in (r.stdout + r.stderr)
+              and 'Traceback' not in (r.stdout + r.stderr), f'rc={r.returncode}')
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
@@ -126,7 +146,7 @@ def main():
     if failed:
         print(f'✗✗ {len(failed)} 病例不过：{failed}')
         sys.exit(1)
-    print(f'✓✓ 四病例全过（{len(passed)}/4）— 重叠判据与 fix 安全网正确')
+    print(f'✓✓ 七病例全过（{len(passed)}/7）— 重叠判据与 fix 安全网、CLI 契约正确')
 
 
 if __name__ == '__main__':

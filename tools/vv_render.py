@@ -18,7 +18,13 @@
   MusicXML 无 new-system 标记行为同 auto；默认路径（不加此参数）与旧版完全一致。
 """
 import sys, os, glob, time, re
-import verovio, cairosvg
+# 渲染依赖延迟容错：缺依赖时模块仍可导入，main 里干净报错 rc=3（不裸崩）
+try:
+    import verovio, cairosvg
+    _DEPS_ERR = None
+except ImportError as _e:
+    verovio = cairosvg = None
+    _DEPS_ERR = _e
 
 DPI_A4 = 254  # 2100px * 72/254 = 595.3pt = A4 宽
 CJK_TEXT_RE = re.compile(r'<tspan[^>]*>[^<]*[一-鿿]')
@@ -82,6 +88,12 @@ def main():
     fixed_lines = '--fixed-lines' in args
     if fixed_lines:
         args.remove('--fixed-lines')
+    if len(args) < 2:
+        print('用法：python3 vv_render.py [--a4] [--batch] [--fixed-lines] <in.musicxml> <outbase|outdir>')
+        sys.exit(2)
+    if _DEPS_ERR is not None:
+        print(f'缺渲染依赖：{_DEPS_ERR}（装法：pip install verovio cairosvg）')
+        sys.exit(3)
     if batch:
         indir, outdir = args[0], args[1]
         os.makedirs(outdir, exist_ok=True)
@@ -97,8 +109,10 @@ def main():
         print(f'完成 {ok}/{len(files)}，总耗时 {time.time()-t0:.1f}s')
     else:
         t0 = time.time()
-        render(args[0], args[1], a4, fixed_lines)
+        ok = render(args[0], args[1], a4, fixed_lines)
         print(f'耗时 {time.time()-t0:.1f}s')
+        if not ok:
+            sys.exit(2)  # 读谱失败：干净非零退出（2026-10-13）
 
 if __name__ == '__main__':
     main()

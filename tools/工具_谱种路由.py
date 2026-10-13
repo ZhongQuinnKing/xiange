@@ -10,14 +10,21 @@ import argparse
 import json
 import os
 
-import cv2
-import numpy as np
+# 视觉依赖延迟容错：缺依赖时模块仍可导入，main 里干净报错 rc=3（不裸崩）
+try:
+    import cv2
+    import numpy as np
+    _DEPS_ERR = None
+except ImportError as _e:
+    cv2 = np = None
+    _DEPS_ERR = _e
 
 
 def load_gray(path):
     img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
     if img is None:
-        raise SystemExit(f'读不到图：{path}')
+        print(f'读不到图：{path}')
+        raise SystemExit(2)
     return img
 
 
@@ -134,6 +141,9 @@ def main():
     ap.add_argument('img')
     ap.add_argument('--json', default=None)
     a = ap.parse_args()
+    if _DEPS_ERR is not None:
+        print(f'缺依赖：{_DEPS_ERR}（装法：pip install opencv-python numpy）')
+        raise SystemExit(3)
     r = route(a.img)
     print(json.dumps(r, ensure_ascii=False, indent=1))
     if a.json:

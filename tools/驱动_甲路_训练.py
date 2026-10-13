@@ -106,7 +106,7 @@ def main():
     epochs = 1 if args.dry_run else args.epochs
     tag = 'dryrun' if args.dry_run else time.strftime('%Y%m%d_%H%M')
     fh = open(os.path.join(OUT, f'日志_{tag}.txt'), 'w', encoding='utf-8')
-    log(f'甲路训练 起：train {len(train_rows)} / val {len(val_rows)}，{len(labels)} 类，轮={epochs}', fh)
+    log(f'古琴自训 起：train {len(train_rows)} / val {len(val_rows)}，{len(labels)} 类，轮={epochs}', fh)
 
     trl = torch.utils.data.DataLoader(JzDS(train_rows, train_tf()), batch_size=100, shuffle=True)
     val_ = torch.utils.data.DataLoader(JzDS(val_rows, eval_tf()), batch_size=100)

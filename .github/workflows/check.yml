@@ -19,7 +19,7 @@ jobs:
         run: ruff check --select E9,F tools/
       - name: Doc consistency check
         run: python tools/doc_check.py
-      - name: Run self-tests (fifteen suites)
+      - name: Run self-tests (eighteen suites)
         run: |
           set -e
           for f in tools/tests/test_*.py; do
