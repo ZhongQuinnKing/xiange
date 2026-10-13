@@ -107,6 +107,16 @@ def main():
     }
     all_ok &= run_case('密度规则不误报（少一音／短和弦）', dens_ok, must=[], must_not=['E5'])
 
+    # CLI 契约：缺文件须干净 fail-closed（rc=2、无 Traceback）
+    import subprocess
+    r = subprocess.run(
+        [sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                      '..', 'theory_check.py'), '/nonexistent_probe.musicxml'],
+        capture_output=True, text=True)
+    if r.returncode != 2 or 'Traceback' in r.stderr:
+        all_ok = False
+        print(f'✗ 缺文件未干净 fail-closed（rc={r.returncode}）')
+
     print()
     if all_ok:
         print('✓✓ 六病例全过 — 乐理错检器判据正确')

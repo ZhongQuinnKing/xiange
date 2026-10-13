@@ -28,6 +28,7 @@
 import argparse
 import json
 import os
+import sys
 import xml.etree.ElementTree as ET
 
 FINDINGS = []   # (sev, code, measure, desc)
@@ -406,6 +407,9 @@ def main():
     ap.add_argument('file', help='MusicXML')
     ap.add_argument('--json', help='结果写 JSON')
     args = ap.parse_args()
+    if not os.path.exists(args.file):
+        sys.stderr.write(f'读谱失败：{args.file} 不存在（参数为 MusicXML 文件路径）\n')
+        sys.exit(2)
     text, findings = build_report(args.file)
     print(text)
     if args.json:

@@ -274,6 +274,9 @@ def main():
     global SPAN_LIMIT
     if args.span:
         SPAN_LIMIT = args.span
+    if not os.path.exists(args.file):
+        sys.stderr.write(f'读谱失败：{args.file} 不存在（参数为 MusicXML/MIDI 文件路径）\n')
+        sys.exit(2)
     res = build_report(args.file)
     if res is None:
         sys.exit(1)

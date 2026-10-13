@@ -76,6 +76,11 @@ def main():
         if md5(fx) != h1:
             fails.append('fixer 不幂等（二次跑字节变化）')
 
+        # CLI 契约：缺文件须干净 fail-closed（rc=2、无 Traceback）
+        rc, out = run('notation_check.py', os.path.join(td, 'no_such.musicxml'))
+        if rc != 2 or 'Traceback' in out:
+            fails.append(f'缺文件未干净 fail-closed（rc={rc}）')
+
     if fails:
         print('用例失败：')
         for f in fails:
