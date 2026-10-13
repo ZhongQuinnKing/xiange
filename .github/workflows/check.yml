@@ -17,7 +17,7 @@ jobs:
         run: pip install -r requirements-dev.txt
       - name: Static check (ruff, light)
         run: ruff check --select E9,F tools/
-      - name: Run self-tests (eleven suites)
+      - name: Run self-tests (twelve suites)
         run: |
           set -e
           for f in tools/tests/test_*.py; do

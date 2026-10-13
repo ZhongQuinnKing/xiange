@@ -44,7 +44,7 @@
     bash install.sh core        # 按档装：core / render / browser / vision / all
     bash install.sh all         # 四档全装
 
-自测（判据级十一套，与 CI 同款）：
+自测（判据级十二套，与 CI 同款）：
 
     for f in tools/tests/test_*.py; do python3 "$f"; done
 
@@ -56,6 +56,7 @@
 - 谱面体检：`python3 tools/score_doctor.py inspect 谱.musicxml`
 - 谱种路由（入口）：`python3 tools/工具_谱种路由.py 谱图.png`，一张图先判谱种（五线谱／六线谱／简谱等），再走对应引擎与工序
 - 乐理体检：`python3 tools/theory_check.py 谱.musicxml`（声部交叉／平行五八度／跨度上限可调／密度骤降／时值）
+- 成品出包：`python3 tools/export_pack.py 谱.musicxml --out 目录 --title 曲名`（五线谱三件＋mxl／mid＋简谱三件＋试听＋成品卡＋zip）
 
 知识线：直接按 知识/90-音乐问答协议.md 的三层路径执行，零安装。
 
@@ -97,13 +98,14 @@
 | render_v4.py | v4 渲染（自查对照用） | 渲染 | |
 | bekern_fix.py | kern 语系骨架归一渲染 | 渲染 | |
 | deliver_dolce.py | 简谱腿：MusicXML 到简谱 PDF／PNG＋123 文本 | 浏览器 | 单声部 |
+| export_pack.py | 成品导出层：MusicXML 到整包（八件＋试听件） | 核心＋渲染＋浏览器 | 字体 OFL 闸／可容忍模式 |
 | 工具_谱种路由.py | 谱种路由入口（先判谱种再进链） | 输入路由 | |
 | bili_extract.py | B站提页（翻页式谱视频提取谱页） | 输入路由 | |
 | 树转换器_v3.py | 古琴树结构转换（训练数据加工） | — | 训练类 |
 | 驱动_甲路_训练.py | 自训线训练驱动 | — | 训练类 |
 | 复测_四页分类隔离.py | 分类层隔离复测 | — | 评估件 |
 
-  - 自测：tools/tests/ 十一套（原六套：test_omr_eval 五场景、test_theory_check 六病例、test_score_doctor 重叠判据与 fix 安全网、test_triage、test_same_name_parts 同名声部防塌陷、test_notation 记谱两件最小闭环与幂等；新增五套：test_integration 六小节端到端过三检器、test_bekern_fix 归一化、test_remeasure 分桶与滤除、test_verify 度量与冒烟、test_deliver_dolce 依赖守卫与 CLI 契约），随时可复跑验证判据；另有过闸轻量静态查（ruff E9,F）
+  - 自测：tools/tests/ 十二套（原六套：test_omr_eval 五场景、test_theory_check 六病例、test_score_doctor 重叠判据与 fix 安全网、test_triage、test_same_name_parts 同名声部防塌陷、test_notation 记谱两件最小闭环与幂等；新增六套：test_integration 六小节端到端过三检器、test_bekern_fix 归一化、test_remeasure 分桶与滤除、test_verify 度量与冒烟、test_deliver_dolce 依赖守卫与 CLI 契约、test_export_pack 出包契约与坏源 fail-closed），随时可复跑验证判据；另有过闸轻量静态查（ruff E9,F）
 - SKILL.md  技能入口（给 AI 装包的总说明；两条能力线分流）
 - CHANGELOG.md  更新日志（版本制度与版本史）
 - CONTRIBUTING.md  贡献指南（含版权审查节）

@@ -133,6 +133,10 @@ def convert_file(pg, xml_path, outdir, view):
         with open(os.path.join(outdir, f'{stem}.123.txt'), 'w') as f:
             f.write(src_text + '\n')
     for i, svg in enumerate(page_svgs, 1):
+        # 字体归一：页文本走 PingFang 系统栈（许可不清，且 cairo 常落兜底字体）；
+        # 转换层换成 OFL 中文字体，PDF/PNG 内嵌即随包许可（对齐 export_pack 口径）
+        svg = svg.replace('font-family="PingFang SC, Microsoft YaHei, sans-serif"',
+                          'font-family="Noto Sans SC"')
         with open(os.path.join(outdir, f'{stem}_p{i}.svg'), 'w') as f:
             f.write(svg)
         cairosvg.svg2pdf(bytestring=svg.encode('utf-8'),
