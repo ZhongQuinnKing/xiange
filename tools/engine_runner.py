@@ -118,6 +118,24 @@ def smt_precheck(inp):
     return smt_root, py
 
 
+def smt_prep_image(inp, td):
+    """压到高 256 像素（保宽比）——PRAIG 权重位置编码表 h 仅容 62 格（=256/4 减余），
+    直喂高分辨图必崩「tensor 98 vs 62」（2026-10-13 实测）。"""
+    try:
+        import cv2
+    except ImportError as e:
+        raise EnvError(f'缺 opencv（SMT 压图用）：{e}')
+    img = cv2.imread(inp, cv2.IMREAD_GRAYSCALE)
+    if img is None:
+        raise RunError(f'读图失败：{inp}')
+    h, w = img.shape[:2]
+    if h != 256:
+        img = cv2.resize(img, (max(1, int(w * 256 / h)), 256))
+    out = os.path.join(td, 'smt_in.png')
+    cv2.imwrite(out, img)
+    return out
+
+
 def smt_run(inp, outdir, params):
     smt_root, py = smt_precheck(inp)
     weights = os.environ.get(
@@ -129,8 +147,9 @@ def smt_run(inp, outdir, params):
     with tempfile.TemporaryDirectory() as td:
         cwd = os.path.join(td, 'run')
         os.makedirs(cwd, exist_ok=True)
-        cmd = [py, script, os.path.abspath(inp), '-o', krn, '-m', weights]
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=1800, cwd=cwd)
+        src = smt_prep_image(inp, td)
+        cmd = [py, script, os.path.abspath(src), '-o', krn, '-m', weights]
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=3600, cwd=cwd)
     if r.returncode != 0:
         raise RunError(f'SMT 退出码 {r.returncode}：{(r.stderr or r.stdout)[-300:]}')
     if not os.path.exists(krn):
