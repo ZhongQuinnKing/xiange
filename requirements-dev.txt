@@ -1,0 +1,2 @@
+# 弦歌 · 自测档（tools/tests 六套；CI 同款）
+-r requirements.txt
