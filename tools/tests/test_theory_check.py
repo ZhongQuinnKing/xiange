@@ -18,7 +18,6 @@ import sys
 import tempfile
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
-import theory_check
 from theory_check import build_report
 
 from music21 import stream, note, chord, meter

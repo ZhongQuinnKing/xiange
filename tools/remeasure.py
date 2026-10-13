@@ -124,7 +124,7 @@ def main():
         avg = sum(x[1] for x in rows) / len(rows)
         strong = sum(1 for x in rows if x[1] >= 0.5)
         print(f"   可比小节 {len(rows)}｜平均一致度 {avg*100:.1f}%｜≥50% 的小节 {strong}/{len(rows)}")
-        print(f"   最差 5 个: " + ", ".join(f"m{b}({j*100:.0f}%)" for b, j in sorted(rows, key=lambda x: x[1])[:5]))
+        print("   最差 5 个: " + ", ".join(f"m{b}({j*100:.0f}%)" for b, j in sorted(rows, key=lambda x: x[1])[:5]))
     else:
         print("   无可比数据（机器侧与手工侧小节无交集，检查输入）")
     print("=" * 46)

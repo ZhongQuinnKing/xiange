@@ -18,7 +18,6 @@ omr_eval — 统一评价引擎（口径标准 v1.0 的实体）
     # 纯结构体检
     python3 omr_eval.py --engine mx:/path/out.musicxml --inspect
 """
-import sys
 import os
 import re
 import json
@@ -309,8 +308,6 @@ def evaluate(truth_events, engine_events, label_truth='真值', label_engine='�
             exact = (tpc == epc)
             if exact:
                 # 八度核对：同一音高类下比对八度
-                t_midis = sorted(p % 12 * 1 + (p // 12) * 12 for p in t.pitches)
-                e_midis = sorted(e.pitches)
                 t_oct = [(p % 12, p // 12) for p in t.pitches]
                 e_oct = [(p % 12, p // 12) for p in e.pitches]
                 if sorted(t_oct) != sorted(e_oct):
@@ -366,18 +363,18 @@ def report_card(result, title=''):
         lines.append(f'时值级: 音高全同事件中，时值全同 {r["dur_same"]}｜总长错 {r["dur_total_err"]}｜切分错 {r["dur_split_err"]}')
         lines.append(f'结构级: 共有小节 {r["measures_common"]}｜仅真值 {r["measures_only_truth"]}'
                      f'｜仅引擎 {r["measures_only_engine"]}')
-        lines.append(f'符号级: （本卡未测，待真值含标注时启用）')
+        lines.append('符号级: （本卡未测，待真值含标注时启用）')
         lines.append('')
         lines.append(f'三色账: 绿 {r["green"]}｜黄 {r["yellow"]}｜红 {r["red"]}（事件级，合计 {n}）')
     else:
         lines.append('无可比事件（小节无交集或解析为空）')
     if r['detail_red']:
         lines.append('')
-        lines.append(f'红明细（前 15）:')
+        lines.append('红明细（前 15）:')
         for m, kind, tp, ep in r['detail_red'][:15]:
             lines.append(f'  m{m} {kind}: 真值 {tp} → 引擎 {ep}')
     lines.append('')
-    lines.append(f'口径标注: 真值全额核对')
+    lines.append('口径标注: 真值全额核对')
     return '\n'.join(lines)
 
 

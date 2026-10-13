@@ -17,7 +17,6 @@ sys.path.insert(0, os.path.join(SELF, 'SuziOMR', 'baseline'))
 sys.path.insert(0, os.path.join(SELF, 'gui-tools'))
 
 import cv2  # noqa: E402
-import numpy as np  # noqa: E402
 import torch  # noqa: E402
 import torchvision.transforms as transforms  # noqa: E402
 from image_manipulation import shrink, paste_to_square  # noqa: E402

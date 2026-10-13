@@ -30,7 +30,7 @@ import json
 import argparse
 from collections import OrderedDict
 
-from music21 import converter, interval as m21interval
+from music21 import converter
 
 SPAN_LIMIT = 20  # 默认可及上限：大十三度 = 20 半音（2026-10-10 改为面向用户（全球）的宽容默认；--span 可调）
 E5_MIN_DUR = 2.0  # E5：持续和弦最短时值（四分音符数）＝2 拍

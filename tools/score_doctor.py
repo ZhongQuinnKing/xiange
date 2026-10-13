@@ -23,7 +23,7 @@ import os
 import shutil
 from collections import Counter
 
-from music21 import converter, stream, note, chord, tempo as m21tempo, meter
+from music21 import converter, note, chord, meter
 
 STD_DURS = [4.0, 3.0, 2.0, 1.5, 1.0, 0.75, 0.5, 0.375, 0.25, 0.125, 0.0625]
 DUR_NAMES = {4.0: '全音符', 3.0: '附点二分', 2.0: '二分', 1.5: '附点四分', 1.0: '四分',

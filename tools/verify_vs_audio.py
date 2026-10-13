@@ -7,7 +7,6 @@
 注意：机器轨含伴奏残留，谱面数据含双手——此指标是**下界估计**，非绝对准确率。
 """
 import re
-import sys
 
 from music21 import converter
 

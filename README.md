@@ -44,7 +44,7 @@
     bash install.sh core        # 按档装：core / render / browser / vision / all
     bash install.sh all         # 四档全装
 
-自测（判据级六套，与 CI 同款）：
+自测（判据级十一套，与 CI 同款）：
 
     for f in tools/tests/test_*.py; do python3 "$f"; done
 
@@ -71,12 +71,44 @@
   - 05-交付标准
   - 06-评测口径（四级度量＋报告卡＋域内泛化分栏）
   - 07-已知局限（手写不做／低清拒收／符号层天花板）
+  - 08-数字源验证教程（verify 三件套逐步命令）
+  - 09-环境兼容矩阵（三平台实测）
+  - 10-能力状态（各线：已验证／在办）
+  - 引擎版本表（版本／权重／产物形态／验证日期／已知失败模式）
   - 册-五线谱／册-简谱（按谱种的工序卡）
-- tools/  工具脚本
-  - 已入：复刻重测（remeasure：机器×手工一致度）、渲染交付（vv_render：MusicXML→SVG/PNG/PDF 一条龙，含 A4 版式与批量）、渲染对比（render_v4）、谱面体检（score_doctor：inspect 体检／fix 修整，fix 自带 .orig 备份与改动明细）、音频对拍（verify_vs_audio）、B站提页（bili_extract）、数字源验证三件套（verify）、多引擎共识（consensus／consensus2）、统一评价引擎（omr_eval：四级度量＋标准报告卡）、乐理错检器（theory_check：声部交叉／平行五八度／跨度过大（默认上限大十三度，可调）／声部密度骤降／时值）、记谱规范两件（notation_check 检符杠分组／符干方向／休止符布局／谱表分配；notation_fix 为对应后处理：八分按拍两两连杠、符干 RH 上 LH 下，幂等）
-  - 自测：tools/tests/ 六套（test_omr_eval 五场景、test_theory_check 六病例、test_score_doctor 重叠判据与 fix 安全网、test_triage、test_same_name_parts 同名声部防塌陷、test_notation 记谱两件最小闭环与幂等），随时可复跑验证判据
+- tools/  工具脚本（四列：工具｜用途｜依赖档｜备注）
+
+| 工具 | 用途 | 依赖档 | 备注 |
+|---|---|---|---|
+| notation_check.py | 记谱规范检器（符杠／符干／休止／谱表） | 零依赖 | |
+| notation_fix.py | 记谱规范后处理（幂等） | 零依赖 | |
+| omr_eval.py | 统一评价引擎（四级度量＋标准报告卡） | 核心 | 口径见 docs/06 |
+| theory_check.py | 乐理错检器（声部交叉／平行五八度／跨度／密度／时值） | 核心 | 跨度上限可调 |
+| score_doctor.py | 谱面体检与修整（inspect／fix） | 核心 | fix 自带 .orig 备份 |
+| triage.py | 待裁闭环（发现环＋机械裁＋三色报） | 核心 | |
+| verify.py | 数字源验证三件套 | 核心 | 教程见 docs/08 |
+| verify_vs_audio.py | 机器与谱面音频对拍 | 核心 | 下界指标 |
+| consensus.py | 多引擎共识融合 | 核心 | |
+| consensus2.py | 共识 v2（质量加权＋闸门分流） | 核心 | 原型件 |
+| consensus2_note.py | 音符级对比试算 | 核心 | 原型件 |
+| remeasure.py | 一键重测（机器×手工一致度） | 核心 | |
+| music_check.py | 知识库定时质检 | 核心 | |
+| vv_render.py | 交付主链：MusicXML 到 SVG／PNG／PDF | 渲染 | A4 版式与批量 |
+| render_v4.py | v4 渲染（自查对照用） | 渲染 | |
+| bekern_fix.py | kern 语系骨架归一渲染 | 渲染 | |
+| deliver_dolce.py | 简谱腿：MusicXML 到简谱 PDF／PNG＋123 文本 | 浏览器 | 单声部 |
+| 工具_谱种路由.py | 谱种路由入口（先判谱种再进链） | 输入路由 | |
+| bili_extract.py | B站提页（翻页式谱视频提取谱页） | 输入路由 | |
+| 树转换器_v3.py | 古琴树结构转换（训练数据加工） | — | 训练类 |
+| 驱动_甲路_训练.py | 自训线训练驱动 | — | 训练类 |
+| 复测_四页分类隔离.py | 分类层隔离复测 | — | 评估件 |
+
+  - 自测：tools/tests/ 十一套（原六套：test_omr_eval 五场景、test_theory_check 六病例、test_score_doctor 重叠判据与 fix 安全网、test_triage、test_same_name_parts 同名声部防塌陷、test_notation 记谱两件最小闭环与幂等；新增五套：test_integration 六小节端到端过三检器、test_bekern_fix 归一化、test_remeasure 分桶与滤除、test_verify 度量与冒烟、test_deliver_dolce 依赖守卫与 CLI 契约），随时可复跑验证判据；另有过闸轻量静态查（ruff E9,F）
 - SKILL.md  技能入口（给 AI 装包的总说明；两条能力线分流）
 - CHANGELOG.md  更新日志（版本制度与版本史）
+- CONTRIBUTING.md  贡献指南（含版权审查节）
+- ROADMAP.md  路线图（六域排期与里程碑）
+- NOTICE  权利与许可声明（五档许可记录＋接管条款）
 - 知识/  音乐知识底座（十域十六份约十万字：乐理记谱／和声／曲式／复调／配器／编配即兴／风格体系／世界音乐／音乐史／音乐教育，＋问答协议与动态档；入口见 知识/_总纲.md）。更新机制：按批修订升版（版本史见 CHANGELOG）；缺口走 issue（域／描述／来源）；最后核验 2026-10-13；时效类与开放项按巡检制定期复核（下轮巡检 2026 年 11 月上旬）
 
 ## 现状（2026-10-12）
@@ -91,6 +123,7 @@
 - 符号层回填、Dorico 精排：按 docs/05 工序执行，自动化程度逐件推进
 - 谱种线扩展：简谱／六线谱／工尺／古琴等分册在册，覆盖逐线扩展
 - 维护节奏：按批推进，批内逐件销账；问题件走 issue 随批处理（本页核验日 2026-10-13）
+- 能力状态一览：docs/10-能力状态.md（各线：已验证／在办，随批刷新）
 
 ## 边界与合规
 

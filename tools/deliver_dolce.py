@@ -28,8 +28,14 @@ import sys
 import time
 import urllib.request
 
-from playwright.sync_api import sync_playwright
-import cairosvg
+try:
+    from playwright.sync_api import sync_playwright
+except ImportError:  # 无浏览器档时不崩在 import，由 main 守卫拒跑
+    sync_playwright = None
+try:
+    import cairosvg
+except ImportError:
+    cairosvg = None
 
 DOLCE_DIR = os.environ.get('DOLCE_DIR', os.path.expanduser('~/dolce'))
 PORT = int(os.environ.get('DOLCE_PORT', '5188'))
@@ -146,6 +152,10 @@ def main():
     ap.add_argument('--out', required=True)
     ap.add_argument('--view', choices=['printed', 'expanded'], default='printed')
     args = ap.parse_args()
+
+    if sync_playwright is None or cairosvg is None:
+        print('缺依赖：playwright／cairosvg（安装：bash install.sh browser）。本脚本不降级运行。', file=sys.stderr)
+        sys.exit(1)
 
     os.makedirs(args.out, exist_ok=True)
     print('dev server:', ensure_server())

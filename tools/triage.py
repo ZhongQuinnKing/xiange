@@ -553,7 +553,7 @@ def three_color_text(path, records, tail_lines=None):
     L.append(f"  机械裁 {m.get('机械裁', 0)} 处（已回填 {mech_changed}｜判定不裁 {mech_mark}）")
     L.append(f"  多源裁 {m.get('多源裁', 0)} 处")
     L.append(f"  人裁   {m.get('人裁', 0) + m.get('待定', 0)} 处（待办）"
-             + (f"—— " + '｜'.join(f'{c} {n}' for c, n in codes.items()) if codes
+             + ("—— " + '｜'.join(f'{c} {n}' for c, n in codes.items()) if codes
                 else ''))
     L.append('')
     for route in ('机械裁', '多源裁'):
