@@ -30,6 +30,7 @@ API: normalize_file(path, dry_run=False) -> dict 报告
      normalize_xml_bytes(data) -> (data, 报告)
 """
 import argparse
+import json
 import os
 import re
 import sys
@@ -342,18 +343,25 @@ def main():
     ap = argparse.ArgumentParser(description='记谱规范后处理（符杠分组／符干方向）')
     ap.add_argument('files', nargs='+', help='MusicXML 文件')
     ap.add_argument('--dry-run', action='store_true', help='只报告，不写盘')
+    ap.add_argument('--json', help='汇总写 JSON（供机读）')
     args = ap.parse_args()
+    reps = []
     for p in args.files:
         if not os.path.exists(p):
-            print(f'  缺少文件：{p}')
-            sys.exit(1)
+            sys.stderr.write(f'读谱失败：{p} 不存在（参数为 MusicXML 文件路径）\n')
+            sys.exit(2)
         rep = normalize_file(p, dry_run=args.dry_run)
+        reps.append(rep)
         flag = '（dry-run 未写盘）' if args.dry_run else ''
         print(f'[记谱规范] {rep["file"]}：符杠组 {rep["groups"]}、带杠音 {rep["beamed_notes"]}、'
               f'符干 {rep["stem_notes"]}、改写块 {rep["changed_blocks"]}'
               f'（{rep["mode"]} 法）{flag}')
     if args.dry_run:
         print('注：dry-run 只报告不改动。')
+    if args.json:
+        with open(args.json, 'w', encoding='utf-8') as f:
+            json.dump(reps, f, ensure_ascii=False, indent=1)
+        print(f'（JSON 已写 {args.json}）')
 
 
 if __name__ == '__main__':

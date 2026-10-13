@@ -71,10 +71,14 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--dir', default=DEFAULT_DIR)
     ap.add_argument('--expect-write', action='store_true')
+    ap.add_argument('--allow-drift', action='store_true',
+                    help='工具升级批用：差异只报不拦（默认差异即退出码非零，防退化）')
+    ap.add_argument('--json', help='汇总写 JSON（机读）')
     args = ap.parse_args()
     man = json.load(open(os.path.join(args.dir, '清单.json'), encoding='utf-8'))
     results = {}
     diffs = []
+    problems = []
     exp_path = os.path.join(args.dir, '预期.json')
     expect = {}
     if os.path.exists(exp_path) and not args.expect_write:
@@ -98,6 +102,8 @@ def main():
                 else f"{f}: 记谱 严{res['notation_sev']}轻{res['notation_light']}／"
                      f"乐理 严{res['theory_sev']}轻{res['theory_light']}")
         print(f'{line}  [{kind}]{" << " + verdict if verdict != "ok" else ""}')
+        if verdict != 'ok':
+            problems.append(f'{f}: {verdict}')
         if expect:
             e = expect.get(f)
             if e and e != res:
@@ -112,6 +118,18 @@ def main():
         for d in diffs:
             print(' -', d)
     print(f'\n共 {len(results)} 首跑毕。')
+    if args.json:
+        with open(args.json, 'w', encoding='utf-8') as fh:
+            json.dump({'pieces': results, 'problems': problems, 'diffs': diffs},
+                      fh, ensure_ascii=False, indent=1)
+        print(f'（JSON 已写 {args.json}）')
+    if problems or diffs:
+        if args.allow_drift:
+            print(f'（--allow-drift：异常 {len(problems)} 项、差异 {len(diffs)} 处，只报不拦）')
+            return 0
+        print(f'回归不过：异常 {len(problems)} 项、差异 {len(diffs)} 处。'
+              f'工具升级批确有预期变化时用 --expect-write 更新快照，或 --allow-drift 只报不拦。')
+        return 1
     return 0
 
 

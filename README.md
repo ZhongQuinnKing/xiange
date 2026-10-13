@@ -44,7 +44,14 @@
     bash install.sh core        # 按档装：core / render / browser / vision / all
     bash install.sh all         # 四档全装
 
-自测（判据级十四套，与 CI 同款）：
+五分钟上手：
+
+    python3 tools/xiange.py doctor              # 环境自检（缺什么直接给修复命令）
+    python3 tools/xiange.py check 谱.musicxml   # 记谱体检（零依赖，立即可跑）
+    python3 tools/xiange.py selfcheck           # 判据级自测全列（一遍看全）
+（route／fix／export 同壳入口；装不上看 docs/12-故障排查）
+
+自测（判据级十五套，与 CI 同款）：
 
     for f in tools/tests/test_*.py; do python3 "$f"; done
 
@@ -77,6 +84,8 @@
   - 09-环境兼容矩阵（三平台实测）
   - 10-能力状态（各线：已验证／在办）
   - 11-出谱平替评估（MuseScore 4 第一轮实测）
+  - 12-故障排查（常见坑速查；先跑 xiange doctor）
+  - 13-复现挑战（公开基准样例包复现指引）
   - 引擎版本表（版本／权重／产物形态／验证日期／已知失败模式）
   - 册-五线谱／册-简谱（按谱种的工序卡）
 - tools/  工具脚本（四列：工具｜用途｜依赖档｜备注）
@@ -109,9 +118,12 @@
 | 复测_四页分类隔离.py | 分类层隔离复测（需 JIALU_SELF／JIALU_GEN 与 --pages） | — | 评估件 |
 | engine_runner.py | 统一引擎入口（图入 MusicXML 出；run.json 留痕） | 零依赖（引擎另装） | 引擎面 |
 | gen_bench.py | 基准样例生成（合成谱例十一首） | 核心 | |
-| bench_run.py | 基准样例跑批（过三检器出对照） | 核心 | |
+| bench_run.py | 基准样例跑批（过三检器出对照；防退化闸） | 核心 | |
+| xiange.py | 统一 CLI 壳（route／check／fix／export／doctor／selfcheck） | 零依赖 | 入口件 |
+| doc_check.py | 文档与实况对账（防数字漂移，CI 挂载） | 零依赖 | |
+| kb_todo_scan.py | 知识库待办核销扫描（[?] 台账工具化） | 零依赖 | |
 
-  - 自测：tools/tests/ 十四套（原六套：test_omr_eval 五场景、test_theory_check 六病例、test_score_doctor 重叠判据与 fix 安全网、test_triage、test_same_name_parts 同名声部防塌陷、test_notation 记谱两件最小闭环与幂等；新增八套：test_integration 六小节端到端过三检器、test_bekern_fix 归一化、test_remeasure 分桶与滤除、test_verify 度量与冒烟、test_deliver_dolce 依赖守卫与 CLI 契约、test_export_pack 出包契约与坏源 fail-closed、test_yuchi_score_check 谱面规范查对五场景与误报边界、test_engine_runner 引擎壳契约与双适配器冒烟），随时可复跑验证判据；另有过闸轻量静态查（ruff E9,F）
+  - 自测：tools/tests/ 十五套（原六套：test_omr_eval 五场景、test_theory_check 六病例、test_score_doctor 重叠判据与 fix 安全网、test_triage、test_same_name_parts 同名声部防塌陷、test_notation 记谱两件最小闭环与幂等；新增九套：test_integration 六小节端到端过三检器、test_bekern_fix 归一化、test_remeasure 分桶与滤除、test_verify 度量与冒烟、test_deliver_dolce 依赖守卫与 CLI 契约、test_export_pack 出包契约与坏源 fail-closed、test_yuchi_score_check 谱面规范查对五场景与误报边界、test_engine_runner 引擎壳契约与双适配器冒烟、test_xiange 统一壳契约），随时可复跑验证判据；另有过闸轻量静态查（ruff E9,F）
 - examples/bench/  公开基准样例包（十一首合成谱例＋清单＋定版预期；跑批 `python3 tools/bench_run.py`）。样例全部自造，验「流程可复现」，不承诺准确率数字
 - SKILL.md  技能入口（给 AI 装包的总说明；两条能力线分流）
 - CHANGELOG.md  更新日志（版本制度与版本史）
