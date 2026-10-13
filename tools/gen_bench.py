@@ -151,6 +151,9 @@ def save(sc, name, outdir, md=None):
     unit = _beam_unit(md)
     for p in sc.parts:
         _beam_by_beat(p, unit)
+        # 小节号显式落写（2026-10-13 修：缺号时解析端全塌成 0，号码依赖工具即失准）
+        for i, m in enumerate(p.getElementsByClass('Measure'), 1):
+            m.number = i
     if '瑕疵' in name:
         for p in sc.parts:
             last_m = list(p.getElementsByClass('Measure'))[-1]
@@ -287,7 +290,8 @@ def p09():
     """三重奏缩谱（三行）：探行数与谱表分配。"""
     sc, md, ks = new_score('基准09_三重奏缩谱三行')
     va = [[('n', E4, 2.0), ('n', F4, 2.0)], [('n', G4, 4.0)]]
-    vc = [[('n', C3, 2.0), ('n', D3, 2.0)], [('n', E3, 4.0)]]
+    # m1 低声部原 C3→D3 与外声部同向构成平行复五度（2026-10-13 全曲可检后现形），改 C3→E3 断平行
+    vc = [[('n', C3, 2.0), ('n', E3, 2.0)], [('n', E3, 4.0)]]
     vn = [[('n', G4, 2.0), ('n', A4, 2.0)], [('n', C5, 4.0)]]
     for pid, ms, clef in [('P1', vn, 'treble'), ('P2', va, 'treble'), ('P3', vc, 'bass')]:
         sc.append(melody_part(pid, md, ks, ms, clef))
@@ -299,8 +303,10 @@ def p10():
     sc, md, ks = new_score('基准10_四重奏缩谱')
     v1 = [[('n', G4, 1.0), ('n', A4, 1.0), ('n', B4, 2.0)], [('n', C5, 4.0)]]
     v2 = [[('n', E4, 1.0), ('n', F4, 1.0), ('n', G4, 2.0)], [('n', E4, 4.0)]]
-    va = [[('n', C4, 1.0), ('n', D4, 1.0), ('n', E4, 2.0)], [('n', G4, 4.0)]]
-    vc = [[('n', C3, 1.0), ('n', D3, 1.0), ('n', E3, 2.0)], [('n', C3, 4.0)]]
+    # m1 中提原 C4→D4→E4 与外声部平行五度链（2026-10-13 全曲可检后现形），改下行断平行；
+    # 大提原 C3→D3→E3 同病，改持续低音 C3
+    va = [[('n', C4, 1.0), ('n', B3, 1.0), ('n', A3, 2.0)], [('n', G4, 4.0)]]
+    vc = [[('n', C3, 4.0)], [('n', C3, 4.0)]]
     for pid, ms, clef in [('P1', v1, 'treble'), ('P2', v2, 'treble'),
                           ('P3', va, 'treble'), ('P4', vc, 'bass')]:
         sc.append(melody_part(pid, md, ks, ms, clef))

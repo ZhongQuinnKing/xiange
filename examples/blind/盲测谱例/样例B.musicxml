@@ -22,17 +22,17 @@
     </scaling>
   </defaults>
   <part-list>
-    <score-part id="Pcc1c6c709f97a2d59e197fc945988932">
+    <score-part id="P7a591af7d4590af51ce179f403f449ea">
       <part-name />
     </score-part>
-    <score-part id="P806448021519c8e489c1dd19069a1f5b">
+    <score-part id="P9b2171dd94d08c39ec1b63cf9d802ae8">
       <part-name />
     </score-part>
   </part-list>
   <!--=========================== Part 1 ===========================-->
-  <part id="Pcc1c6c709f97a2d59e197fc945988932">
-    <!--========================= Measure 0 ==========================-->
-    <measure implicit="no" number="0">
+  <part id="P7a591af7d4590af51ce179f403f449ea">
+    <!--========================= Measure 1 ==========================-->
+    <measure implicit="no" number="1">
       <attributes>
         <divisions>10080</divisions>
         <key>
@@ -72,8 +72,8 @@
         <type>half</type>
       </note>
     </measure>
-    <!--========================= Measure 0 ==========================-->
-    <measure implicit="no" number="0">
+    <!--========================= Measure 2 ==========================-->
+    <measure implicit="no" number="2">
       <note>
         <pitch>
           <step>D</step>
@@ -101,9 +101,9 @@
     </measure>
   </part>
   <!--=========================== Part 2 ===========================-->
-  <part id="P806448021519c8e489c1dd19069a1f5b">
-    <!--========================= Measure 0 ==========================-->
-    <measure implicit="no" number="0">
+  <part id="P9b2171dd94d08c39ec1b63cf9d802ae8">
+    <!--========================= Measure 1 ==========================-->
+    <measure implicit="no" number="1">
       <attributes>
         <divisions>10080</divisions>
         <key>
@@ -145,8 +145,8 @@
         <type>whole</type>
       </note>
     </measure>
-    <!--========================= Measure 0 ==========================-->
-    <measure implicit="no" number="0">
+    <!--========================= Measure 2 ==========================-->
+    <measure implicit="no" number="2">
       <note>
         <pitch>
           <step>G</step>

@@ -22,20 +22,20 @@
     </scaling>
   </defaults>
   <part-list>
-    <score-part id="P64609eda7cda2f48da40b95b568e3958">
+    <score-part id="P3c0df3867e36d7327f10a5b7346b24eb">
       <part-name />
     </score-part>
-    <score-part id="Pe71184bf78083a3353174487bb31f44b">
+    <score-part id="P03824709180f31873d841a0336cb790f">
       <part-name />
     </score-part>
-    <score-part id="Pdd26ad4df92921ce98a9f6044a6297aa">
+    <score-part id="P50a6b6e6694a05dbe4ed1e64fe649e5f">
       <part-name />
     </score-part>
   </part-list>
   <!--=========================== Part 1 ===========================-->
-  <part id="P64609eda7cda2f48da40b95b568e3958">
-    <!--========================= Measure 0 ==========================-->
-    <measure implicit="no" number="0">
+  <part id="P3c0df3867e36d7327f10a5b7346b24eb">
+    <!--========================= Measure 1 ==========================-->
+    <measure implicit="no" number="1">
       <attributes>
         <divisions>10080</divisions>
         <key>
@@ -67,8 +67,8 @@
         <type>half</type>
       </note>
     </measure>
-    <!--========================= Measure 0 ==========================-->
-    <measure implicit="no" number="0">
+    <!--========================= Measure 2 ==========================-->
+    <measure implicit="no" number="2">
       <note>
         <pitch>
           <step>C</step>
@@ -80,9 +80,9 @@
     </measure>
   </part>
   <!--=========================== Part 2 ===========================-->
-  <part id="Pe71184bf78083a3353174487bb31f44b">
-    <!--========================= Measure 0 ==========================-->
-    <measure implicit="no" number="0">
+  <part id="P03824709180f31873d841a0336cb790f">
+    <!--========================= Measure 1 ==========================-->
+    <measure implicit="no" number="1">
       <attributes>
         <divisions>10080</divisions>
         <key>
@@ -114,8 +114,8 @@
         <type>half</type>
       </note>
     </measure>
-    <!--========================= Measure 0 ==========================-->
-    <measure implicit="no" number="0">
+    <!--========================= Measure 2 ==========================-->
+    <measure implicit="no" number="2">
       <note>
         <pitch>
           <step>G</step>
@@ -127,9 +127,9 @@
     </measure>
   </part>
   <!--=========================== Part 3 ===========================-->
-  <part id="Pdd26ad4df92921ce98a9f6044a6297aa">
-    <!--========================= Measure 0 ==========================-->
-    <measure implicit="no" number="0">
+  <part id="P50a6b6e6694a05dbe4ed1e64fe649e5f">
+    <!--========================= Measure 1 ==========================-->
+    <measure implicit="no" number="1">
       <attributes>
         <divisions>10080</divisions>
         <key>
@@ -154,15 +154,15 @@
       </note>
       <note>
         <pitch>
-          <step>D</step>
+          <step>E</step>
           <octave>3</octave>
         </pitch>
         <duration>20160</duration>
         <type>half</type>
       </note>
     </measure>
-    <!--========================= Measure 0 ==========================-->
-    <measure implicit="no" number="0">
+    <!--========================= Measure 2 ==========================-->
+    <measure implicit="no" number="2">
       <note>
         <pitch>
           <step>E</step>

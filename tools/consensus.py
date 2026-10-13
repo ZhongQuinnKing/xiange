@@ -19,7 +19,8 @@ B 引擎：bekern 文本类输出（如 SMT 的 .krn，多行文件请先按序�
 import argparse
 import re
 
-import music21
+
+from m21_cache import parse_cached
 
 KERN_PC = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
 PC_NAME = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
@@ -27,17 +28,19 @@ DUR = {'1': 4.0, '2': 2.0, '4': 1.0, '8': 0.5, '16': 0.25, '32': 0.125}
 
 
 def bars_from_musicxml(path):
-    s = music21.converter.parse(path)
+    s = parse_cached(path)
     d = {}
     for p in s.parts:
-        for m in p.getElementsByClass('Measure'):
+        for mi, m in enumerate(p.getElementsByClass('Measure'), 1):
+            # 小节号缺写时（解析为 0）回退为逐部序位（2026-10-13 修：缺号会致按号聚键全塌）
+            num = m.number if isinstance(m.number, int) and m.number > 0 else mi
             pcs = set()
             for n in m.recurse().notes:
                 if n.isChord:
                     pcs |= {q.midi % 12 for q in n.pitches}
                 else:
                     pcs.add(n.pitch.midi % 12)
-            d.setdefault(m.number, set()).update(pcs)
+            d.setdefault(num, set()).update(pcs)
     return d
 
 
@@ -64,6 +67,107 @@ def notes_from_bekern(path):
 
 def fmt(pcs):
     return ' '.join(PC_NAME[x] for x in sorted(pcs)) if pcs else '（空）'
+
+
+def seq_events_from_musicxml(path):
+    """扁平事件序 [(pc, dur_ql or None)]，按谱面先后。"""
+    s = parse_cached(path)
+    evs = []
+    for p in s.parts:
+        for m in p.getElementsByClass('Measure'):
+            for n in m.recurse().notes:
+                if n.isChord:
+                    for q in n.pitches:
+                        evs.append((q.midi % 12, float(n.quarterLength)))
+                else:
+                    evs.append((n.pitch.midi % 12, float(n.quarterLength)))
+    return evs
+
+
+def seq_events_from_bekern(path):
+    return [(pc, dur) for (_bar, pc, dur) in notes_from_bekern(path)]
+
+
+def nw_align(a, b, dur_tol=0.26, gap=-1.0):
+    """Needleman-Wunsch 对齐两个事件序。
+
+    打分：同音高类 +2（时值也在容差内再 +0.5）；音高类不同 -1；断层 -1。
+    返回 [(i or None, j or None)] 对齐路径。
+    """
+    n, mlen = len(a), len(b)
+    if not n or not mlen:
+        return [(i, None) for i in range(n)] + [(None, j) for j in range(mlen)]
+
+    def sim(x, y):
+        if x[0] != y[0]:
+            return -1.0
+        sc = 2.0
+        if x[1] is not None and y[1] is not None and abs(x[1] - y[1]) <= dur_tol:
+            sc += 0.5
+        return sc
+
+    dp = [[0.0] * (mlen + 1) for _ in range(n + 1)]
+    for i in range(1, n + 1):
+        dp[i][0] = dp[i - 1][0] + gap
+    for j in range(1, mlen + 1):
+        dp[0][j] = dp[0][j - 1] + gap
+    for i in range(1, n + 1):
+        ai = a[i - 1]
+        for j in range(1, mlen + 1):
+            dp[i][j] = max(dp[i - 1][j - 1] + sim(ai, b[j - 1]),
+                           dp[i - 1][j] + gap, dp[i][j - 1] + gap)
+    path, i, j = [], n, mlen
+    while i > 0 or j > 0:
+        if i > 0 and j > 0 and dp[i][j] == dp[i - 1][j - 1] + sim(a[i - 1], b[j - 1]):
+            path.append((i - 1, j - 1))
+            i, j = i - 1, j - 1
+        elif i > 0 and dp[i][j] == dp[i - 1][j] + gap:
+            path.append((i - 1, None))
+            i -= 1
+        else:
+            path.append((None, j - 1))
+            j -= 1
+    return list(reversed(path))
+
+
+def cmd_seq(args):
+    """序列对齐共识（可选路径；不改 pc／notes 两法默认）。"""
+    A = seq_events_from_musicxml(args.engine_a)
+    B = seq_events_from_bekern(args.engine_b)
+    path = nw_align(A, B)
+    agree = disagree = only_a = only_b = 0
+    disp_shown = 0
+    print('[序列对齐] 事件对齐结果（前 12 条待裁示例）：')
+    for i, j in path:
+        if i is not None and j is not None:
+            if A[i][0] == B[j][0]:
+                agree += 1
+            else:
+                disagree += 1
+                if disp_shown < 12:
+                    print(f'  待裁：A[{i}]={PC_NAME[A[i][0]]} vs B[{j}]={PC_NAME[B[j][0]]}')
+                    disp_shown += 1
+        elif i is not None:
+            only_a += 1
+        else:
+            only_b += 1
+    tot = len(path)
+    print(f'对齐位 {tot}：同音类 {agree}｜异音类 {disagree}｜仅 A 有 {only_a}｜仅 B 有 {only_b}')
+
+    # 同曲现法对照（音高类级·逐小节集合）
+    Ab = bars_from_musicxml(args.engine_a)
+    Bb = {}
+    for (bar, pc, _) in notes_from_bekern(args.engine_b):
+        Bb.setdefault(bar, set()).add(pc)
+    N = max(max(Ab, default=0), max(Bb, default=0))
+    n_cons = n_dis = 0
+    for i in range(1, N + 1):
+        a_, b_ = Ab.get(i, set()), Bb.get(i, set())
+        n_cons += len(a_ & b_)
+        n_dis += len((a_ | b_) - (a_ & b_))
+    print(f'[现法对照] 小节数 {N}：共识音类 {n_cons}｜待裁音类 {n_dis}'
+          f'（待裁占比 {n_dis/max(n_cons+n_dis,1)*100:.0f}%）')
+    print('（序列法定位到事件序位，可作局部重试范围；两法并跑对数是 C 组对照实验的口径。）')
 
 
 def cmd_pc(args):
@@ -127,6 +231,11 @@ def main():
     p2.add_argument('engine_a')
     p2.add_argument('engine_b')
     p2.set_defaults(func=cmd_notes)
+
+    p3 = sub.add_parser('seq', help='序列对齐共识（可选路径，实验用）')
+    p3.add_argument('engine_a')
+    p3.add_argument('engine_b')
+    p3.set_defaults(func=cmd_seq)
 
     args = ap.parse_args()
     args.func(args)

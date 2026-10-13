@@ -30,7 +30,8 @@ import json
 import argparse
 from collections import OrderedDict
 
-from music21 import converter
+from m21_cache import parse_cached, iter_notes_fast
+
 
 SPAN_LIMIT = 20  # 默认可及上限：大十三度 = 20 半音（2026-10-10 改为面向用户（全球）的宽容默认；--span 可调）
 E5_MIN_DUR = 2.0  # E5：持续和弦最短时值（四分音符数）＝2 拍
@@ -52,7 +53,7 @@ def perfect_class(i):
 
 
 def check_file(path):
-    score = converter.parse(path)
+    score = parse_cached(path)
     parts = list(score.parts)
     if not parts:
         print('无谱表')
@@ -70,16 +71,20 @@ def check_file(path):
         else:
             _seen[str(name)] = 1
         evs = OrderedDict()
-        for meas in ps.getElementsByClass('Measure'):
+        for mi, meas in enumerate(ps.getElementsByClass('Measure'), 1):
             mno = meas.number
             if not isinstance(mno, int):
                 try:
                     mno = int(''.join(ch for ch in str(mno) if ch.isdigit()) or 0)
                 except ValueError:
-                    continue
+                    mno = 0
+            # 号缺失或重号时回退逐部序位（2026-10-13 修：号作键会把无号文件塌成只剩末小节，
+            # 曾致全曲只检最后一节而假报「干净」）
+            if mno <= 0 or mno in evs:
+                mno = mi
             lst = []
             seen = set()
-            for el in meas.recurse().notesAndRests:
+            for el in iter_notes_fast(meas):
                 if el.isRest:
                     continue
                 ps_list = [n.pitch.midi for n in el.notes] if el.isChord else (
