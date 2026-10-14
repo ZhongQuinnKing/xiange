@@ -9,6 +9,9 @@ theory_check — 乐理错检器（护城河第④层：乐理解读层）
 规则清单 v1（来源：知识库 20-和声 / 30-曲式 / 10-乐理与记谱 / 61-旋律织体；2026-10-10）：
 
   E1 声部交叉   —— 两个声部同拍，低声部跑到高声部上面（严重）
+                   设计性交叉（主客易位段、织体/彩饰声部穿行全音域）可用参数放行：
+                   --e1-exempt 声部名（整曲豁免涉该声部的配对）、--e1-range 起-止
+                   （小节段豁免，可多次）；放行照实留痕在报告头，未匹配的声部名照报
   E2 和弦音集   —— 同拍音高集合构成超出可能的音簇（四度叠置以上）[?] 待知识库细校，先只报强八度不报
   E3 平行五八度 —— 两声部连续两拍同向而行，且连续构成纯五度或纯八度（严重）
   E4 跨度过大   —— 同手同时发音超过默认可及上限（20 半音＝大十三度，--span 可调）（严重）
@@ -23,6 +26,8 @@ theory_check — 乐理错检器（护城河第④层：乐理解读层）
 用法:
     python3 theory_check.py <文件.musicxml|.mid|.krn>
     python3 theory_check.py <文件> --json 结果.json
+    python3 theory_check.py <文件> --e1-range 9-12            # 设计段豁免 E1
+    python3 theory_check.py <文件> --e1-exempt "Pipa,Guzheng" # 声部整曲豁免 E1
 """
 import sys
 import os
@@ -37,6 +42,9 @@ SPAN_LIMIT = 20  # 默认可及上限：大十三度 = 20 半音（2026-10-10 �
 E5_MIN_DUR = 2.0  # E5：持续和弦最短时值（四分音符数）＝2 拍
 E5_DROP = 2       # E5：音数骤降阈值
 FINDINGS = []    # (sev, code, measure, desc)
+E1_EXEMPT = []   # --e1-exempt：整曲豁免 E1 的声部名（涉该声部的配对不报）
+E1_RANGES = []   # --e1-range：豁免 E1 的小节区间 [(起, 止)]（设计段）
+E1_NOTES = []    # E1 豁免的透明留痕（参数未匹配声部名等）
 
 
 def add(sev, code, measure, desc):
@@ -124,11 +132,21 @@ def check_file(path):
                             f'{name} 同拍跨度 {span} 半音（超默认可及上限 {SPAN_LIMIT}）：{ps}')
 
     # ── E1 声部交叉（应在上者低于应在下者，或两者相交）─────
+    #    设计性交叉（主客易位段/织体穿行）按参数放行；放行照实留痕，未匹配名照报
+    if E1_EXEMPT:
+        unmatched = [n for n in E1_EXEMPT if n not in part_events]
+        if unmatched:
+            E1_NOTES.append(
+                f'豁免声部名未匹配：{"、".join(unmatched)}；本谱声部＝{"、".join(names)}')
     if upper_staffs and lower_staffs:
         for lo_name in lower_staffs:
             for hi_name in upper_staffs:
+                if lo_name in E1_EXEMPT or hi_name in E1_EXEMPT:
+                    continue
                 lo_evs, hi_evs = part_events[lo_name], part_events[hi_name]
                 for mno in set(lo_evs) & set(hi_evs):
+                    if any(a <= mno <= b for a, b in E1_RANGES):
+                        continue
                     lo_map = {o: p for o, p, d in lo_evs[mno]}
                     hi_map = {o: p for o, p, d in hi_evs[mno]}
                     for onset in set(lo_map) & set(hi_map):
@@ -243,6 +261,7 @@ def check_measure_lengths(score):
 
 def build_report(path):
     FINDINGS.clear()
+    E1_NOTES.clear()
     score = check_file(path)
     if score is None:
         return None
@@ -257,6 +276,11 @@ def build_report(path):
     hard = [f for f in findings if f[0] == '严重']
     soft = [f for f in findings if f[0] == '轻']
     lines.append(f'严重 {len(hard)} 处｜轻 {len(soft)} 处')
+    if E1_EXEMPT or E1_RANGES:
+        ex = '、'.join(E1_EXEMPT) if E1_EXEMPT else '无'
+        rg = '、'.join(f'{a}-{b}' for a, b in E1_RANGES) if E1_RANGES else '无'
+        lines.append(f'E1 豁免（参数）：声部〔{ex}〕；小节〔{rg}〕；豁免处不报，其余规则不受影响')
+    lines.extend(E1_NOTES)
     lines.append('')
     if not findings:
         lines.append('干净：无症状（注意本卡只查机械可检项，不含艺术判断）')
@@ -275,10 +299,30 @@ def main():
     ap.add_argument('file', help='MusicXML/MIDI')
     ap.add_argument('--json', help='结果写 JSON')
     ap.add_argument('--span', type=int, default=None, help='可及跨度上限（半音），默认 20（大十三度，面向用户可调）')
+    ap.add_argument('--e1-exempt', default=None,
+                    help='E1 豁免的声部名，逗号分隔（整曲；照体检卡显示的声部名写，如 "Pipa,Guzheng"）')
+    ap.add_argument('--e1-range', action='append', default=None, metavar='起-止',
+                    help='E1 豁免的小节区间（如 9-12；可多次，或逗号并列 9-12,15）')
     args = ap.parse_args()
-    global SPAN_LIMIT
+    global SPAN_LIMIT, E1_EXEMPT, E1_RANGES
     if args.span:
         SPAN_LIMIT = args.span
+    if args.e1_exempt:
+        E1_EXEMPT = [x.strip() for x in args.e1_exempt.split(',') if x.strip()]
+    for spec in (args.e1_range or []):
+        for seg in str(spec).split(','):
+            seg = seg.strip()
+            if not seg:
+                continue
+            segs = seg.split('-', 1)
+            try:
+                a = int(segs[0])
+                b = int(segs[1]) if len(segs) == 2 else a
+            except ValueError:
+                ap.error(f'--e1-range 格式应为「起-止」或单节号：{seg}')
+            if a > b:
+                a, b = b, a
+            E1_RANGES.append((a, b))
     if not os.path.exists(args.file):
         sys.stderr.write(f'读谱失败：{args.file} 不存在（参数为 MusicXML/MIDI 文件路径）\n')
         sys.exit(2)

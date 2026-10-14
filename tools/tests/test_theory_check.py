@@ -10,6 +10,7 @@ theory_check 自校验 — 构造病例谱，验证每条规则的真阳性与�
   跨度过大   m4  ：右单手同时按 15 度     → E4 必须报
   密度骤降 m5  ：持续二分和弦后骤降为单音 → E5 必须报
   密度反例 m6-7：只少一音／短和弦接单音 → E5 不许报
+  E1 豁免四例  ：声部参数／小节参数放行；豁免名未匹配照报；区间只罩指定段
 
 用法: python3 test_theory_check.py
 """
@@ -18,6 +19,7 @@ import sys
 import tempfile
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+import theory_check as tc
 from theory_check import build_report
 
 from music21 import stream, note, chord, meter
@@ -61,6 +63,16 @@ def run_case(name, cases, must, must_not):
     mark = '✓' if ok else '✗'
     print(f'{mark} {name}: 症状={codes}｜须有={must} 须无={must_not}')
     return ok
+
+
+def run_case_params(name, cases, must, must_not, e1_exempt=None, e1_ranges=None):
+    """带 E1 豁免参数的病例（设／复位模块级参数，试后必还原）"""
+    tc.E1_EXEMPT = list(e1_exempt or [])
+    tc.E1_RANGES = [tuple(r) for r in (e1_ranges or [])]
+    try:
+        return run_case(name, cases, must, must_not)
+    finally:
+        tc.E1_EXEMPT, tc.E1_RANGES = [], []
 
 
 def main():
@@ -107,6 +119,22 @@ def main():
     }
     all_ok &= run_case('密度规则不误报（少一音／短和弦）', dens_ok, must=[], must_not=['E5'])
 
+    # 7-10 E1 豁免参数（供设计性交叉放行；基线报警见病例 3）
+    all_ok &= run_case_params('E1 豁免（声部参数）放行', cross, must=[], must_not=['E1'],
+                              e1_exempt=['RH'])
+    all_ok &= run_case_params('E1 豁免（小节参数）放行', cross, must=[], must_not=['E1'],
+                              e1_ranges=[(1, 1)])
+    all_ok &= run_case_params('豁免名未匹配仍报（不许静默放行）', cross, must=['E1'],
+                              must_not=[], e1_exempt=['NoSuchPart'])
+    cross2 = {
+        1: [('RH', [50], 4.0), ('LH', [60], 4.0)],
+        2: [('RH', [50], 4.0), ('LH', [60], 4.0)],
+    }
+    all_ok &= run_case_params('小节参数只罩指定段（区外照报）', cross2, must=['E1'],
+                              must_not=[], e1_ranges=[(2, 2)])
+    all_ok &= run_case_params('小节参数罩全段（净）', cross2, must=[], must_not=['E1'],
+                              e1_ranges=[(1, 2)])
+
     # CLI 契约：缺文件须干净 fail-closed（rc=2、无 Traceback）
     import subprocess
     r = subprocess.run(
@@ -117,9 +145,19 @@ def main():
         all_ok = False
         print(f'✗ 缺文件未干净 fail-closed（rc={r.returncode}）')
 
+    # CLI 契约：--e1-range 格式错须干净 fail-closed（rc=2、无 Traceback）
+    r2 = subprocess.run(
+        [sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                      '..', 'theory_check.py'),
+         '--e1-range', '9x', '/nonexistent_probe.musicxml'],
+        capture_output=True, text=True)
+    if r2.returncode != 2 or 'Traceback' in r2.stderr:
+        all_ok = False
+        print(f'✗ --e1-range 格式错未干净 fail-closed（rc={r2.returncode}）')
+
     print()
     if all_ok:
-        print('✓✓ 六病例全过 — 乐理错检器判据正确')
+        print('✓✓ 全部病例过（含 E1 豁免四例）— 乐理错检器判据正确')
     else:
         print('✗✗ 有病例不过，修到全过为止')
         sys.exit(1)
