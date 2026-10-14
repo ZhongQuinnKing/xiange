@@ -12,6 +12,7 @@
     --diff  翻页判定帧差阈值（默认 8；漏检就调小，误报就调大）
     --crop-top / --crop-bottom  裁掉顶部/底部比例（默认 0 / 0.26，去底部键盘带）
 输出: 输出目录/page_XX.png 与 _overview.jpg
+退出码: 0=成；2=用法／视频不存在；3=缺依赖（opencv-python／numpy／ffmpeg）
 
 备注：不直接用 cv2.VideoCapture 读视频——对部分 B站 mp4 编码会失败；
 ffmpeg 抽帧最稳（实测）。
@@ -21,10 +22,15 @@ import glob
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 
-import cv2
-import numpy as np
+try:
+    import cv2
+    import numpy as np
+    _HAVE_CV = True
+except ImportError:  # 缺件走干净降级：--help 仍可用，跑时 rc=3
+    _HAVE_CV = False
 
 
 def main():
@@ -37,8 +43,15 @@ def main():
     ap.add_argument('--crop-bottom', type=float, default=0.26)
     args = ap.parse_args()
 
+    if not _HAVE_CV:
+        sys.stderr.write('缺依赖：需要 opencv-python 与 numpy（pip install opencv-python numpy）\n')
+        sys.exit(3)
+    if not os.path.exists(args.video):
+        sys.stderr.write(f'视频不存在：{args.video}\n')
+        sys.exit(2)
     if not shutil.which('ffmpeg'):
-        raise SystemExit('需要 ffmpeg（brew install ffmpeg）')
+        sys.stderr.write('缺依赖：需要 ffmpeg（brew install ffmpeg）\n')
+        sys.exit(3)
 
     tmp = tempfile.mkdtemp(prefix='score_frames_')
     try:

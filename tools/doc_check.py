@@ -23,10 +23,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 
 CN_NUM = {'十': 10, '十一': 11, '十二': 12, '十三': 13, '十四': 14,
-          '十五': 15, '十六': 16, '十七': 17, '十八': 18, '十九': 19, '二十': 20}
+          '十五': 15, '十六': 16, '十七': 17, '十八': 18, '十九': 19,
+          '二十': 20, '二十一': 21}
 EN_NUM = {'ten': 10, 'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14,
           'fifteen': 15, 'sixteen': 16, 'seventeen': 17, 'eighteen': 18,
-          'nineteen': 19, 'twenty': 20}
+          'nineteen': 19, 'twenty': 20, 'twenty-one': 21}
 
 
 def check_suite_count(issues):
@@ -37,7 +38,7 @@ def check_suite_count(issues):
         if got != n:
             issues.append(f'README「判据级{m.group(1)}套」≠ 实际 {n} 套')
     wf = open(os.path.join(ROOT, '.github', 'workflows', 'check.yml'), encoding='utf-8').read()
-    for m in re.finditer(r'Run self-tests \(([a-z]+) suites\)', wf):
+    for m in re.finditer(r'Run self-tests \(([a-z\-]+) suites\)', wf):
         got = EN_NUM.get(m.group(1))
         if got != n:
             issues.append(f'CI 步骤名「{m.group(1)} suites」≠ 实际 {n} 套')

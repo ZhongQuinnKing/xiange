@@ -51,7 +51,7 @@
     python3 tools/xiange.py selfcheck           # 判据级自测全列（一遍看全）
 （route／fix／export 同壳入口；装不上看 docs/12-故障排查）
 
-自测（判据级十八套，与 CI 同款）：
+自测（判据级二十一套，与 CI 同款）：
 
     for f in tools/tests/test_*.py; do python3 "$f"; done
 
@@ -124,7 +124,7 @@
 | kb_todo_scan.py | 知识库待办核销扫描（[?] 台账工具化） | 零依赖 | |
 | m21_cache.py | music21 解析缓存层（单流程只解析一次） | 核心 | 库件 |
 
-  - 自测：tools/tests/ 十八套（原六套：test_omr_eval 五场景、test_theory_check 六病例、test_score_doctor 重叠判据与 fix 安全网、test_triage、test_same_name_parts 同名声部防塌陷、test_notation 记谱两件最小闭环与幂等；新增十二套：test_integration 六小节端到端过三检器、test_bekern_fix 归一化、test_remeasure 分桶与滤除、test_verify 度量与冒烟、test_deliver_dolce 依赖守卫与 CLI 契约、test_export_pack 出包契约与坏源 fail-closed、test_yuchi_score_check 谱面规范查对五场景与误报边界、test_engine_runner 引擎壳契约与双适配器冒烟、test_xiange 统一壳契约、test_consensus 共识三模式判读与缺文件契约、test_vv_render 渲染腿契约与 CJK 修复、test_spec_route 谱种路由契约与合成图判读），随时可复跑验证判据；另有过闸轻量静态查（ruff E9,F）
+  - 自测：tools/tests/ 二十一套（原六套：test_omr_eval 五场景、test_theory_check 十一病例、test_score_doctor 重叠判据与 fix 安全网、test_triage、test_same_name_parts 同名声部防塌陷、test_notation 记谱两件最小闭环与幂等；新增十二套：test_integration 六小节端到端过三检器、test_bekern_fix 归一化、test_remeasure 分桶与滤除、test_verify 度量与冒烟、test_deliver_dolce 依赖守卫与 CLI 契约、test_export_pack 出包契约与坏源 fail-closed、test_yuchi_score_check 谱面规范查对五场景与误报边界、test_engine_runner 引擎壳契约与双适配器冒烟、test_xiange 统一壳契约、test_consensus 共识三模式判读与缺文件契约、test_vv_render 渲染腿契约与 CJK 修复、test_spec_route 谱种路由契约与合成图判读；续增三套：test_verify_vs_audio 音高类一致度函数件与 CLI 契约、test_music_check 知识库质检 rc 口径与环境口、test_bili_extract 谱视频提页缺件降级与合成跑通），随时可复跑验证判据；另有过闸轻量静态查（ruff E9,F）
 - examples/bench/  公开基准样例包（十一首合成谱例＋清单＋定版预期；跑批 `python3 tools/bench_run.py`）。样例全部自造，验「流程可复现」，不承诺准确率数字
 - SKILL.md  技能入口（给 AI 装包的总说明；两条能力线分流）
 - CHANGELOG.md  更新日志（版本制度与版本史）

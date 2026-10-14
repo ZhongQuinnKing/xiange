@@ -5,8 +5,15 @@
 原理：原曲录音为 G 调，陈威全谱为 C 调 → 机器音高 +5 半音后与谱面同调，
 再比每小节的**音高类集合**（pitch-class set），算 Jaccard 相似度。
 注意：机器轨含伴奏残留，谱面数据含双手——此指标是**下界估计**，非绝对准确率。
+
+用法:
+    python3 verify_vs_audio.py [--machine MID] [--manual MD [MD ...]] [--transpose N]
+退出码: 0=出数；2=输入缺（机器轨／手工数据不存在）
 """
+import argparse
+import os
 import re
+import sys
 
 from music21 import converter
 
@@ -59,10 +66,28 @@ def load_manual(md_paths):
 
 
 def main():
-    machine = load_machine("/var/tmp/shimian_audio/bp_out/vocals_basic_pitch.mid")
-    manual = load_manual(["/var/tmp/jp/pages/page1_data.md",
-                          "/var/tmp/jp/pages/page2_data.md",
-                          "/var/tmp/jp/pages/page3_data.md"])
+    ap = argparse.ArgumentParser(description='机器(音频) vs 手工(谱面精读) 逐小节音高类一致度')
+    ap.add_argument('--machine', default='/var/tmp/shimian_audio/bp_out/vocals_basic_pitch.mid',
+                    help='机器转录 MIDI（默认＝原工作流路径）')
+    ap.add_argument('--manual', nargs='+',
+                    default=['/var/tmp/jp/pages/page1_data.md',
+                             '/var/tmp/jp/pages/page2_data.md',
+                             '/var/tmp/jp/pages/page3_data.md'],
+                    help='手工精读页数据 md（可多份；默认＝原工作流三页）')
+    ap.add_argument('--transpose', type=int, default=5,
+                    help='机器轨移调半音（默认 5；原曲 G→谱面 C）')
+    args = ap.parse_args()
+
+    if not os.path.exists(args.machine):
+        sys.stderr.write(f'机器轨不存在：{args.machine}（--machine 可指定）\n')
+        sys.exit(2)
+    miss = [p for p in args.manual if not os.path.exists(p)]
+    if miss:
+        sys.stderr.write('手工数据不存在：%s（--manual 可指定）\n' % '、'.join(miss))
+        sys.exit(2)
+
+    machine = load_machine(args.machine, transpose=args.transpose)
+    manual = load_manual(args.manual)
     common = sorted(set(machine) & set(manual))
     rows = []
     for b in common:
