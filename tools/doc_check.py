@@ -7,7 +7,7 @@
   2 工具表：README 工具表所列 .py 须与 tools/*.py 实际文件双向一致
   3 引用：README／SKILL／CONTRIBUTING／ROADMAP／docs 内的 docs/NN、知识/NN、tools/x.py、
     examples/xx 引用须可解析（缺失即红）
-  4 公开语汇：全仓文本不得含内部协作语汇（黑名单见下；清单随发现增补，规矩见 CONTRIBUTING）
+  4 公开语汇：全仓文本不得含内部协作语汇（清单随发现增补，规矩见 CONTRIBUTING）
 
 用法: python3 tools/doc_check.py [--json 报告.json]
 退出码：0 全对 ／ 1 有差异
@@ -76,35 +76,44 @@ def check_refs(issues):
     return checked
 
 
-# Patterns are assembled with \u escapes (re supports them): this scanner must not carry the word list into the repo
-VOCAB_BLACKLIST = [
-    (r'指令[_\-－]\s*\d+', '内部指令编号'),
-    (r'\u97f3\u4e50\u6280\u80fd\u5305\u002d\u5185\u90e8', '内部目录名'),
-    (r'Desktop[/\\][\u8f6c\u8f49]\u8c31', '内部开发路径'),
-    (r'\u7a97\u53e3\u603b\u8c03\u5ea6', '内部台账名'),
-    (r'\u5c11\u7237|\u8587\u8587|\u5143\u82f1', '私人称谓'),
-    (r'\u5929\u9009', '内部设备代号'),
-]
+# 公开面词表留空可增补；本机私有词表经 load_local_blacklist() 并入（外置文件，随包零私有字）
+VOCAB_BLACKLIST = []
 VOCAB_SCAN_EXT = ('.py', '.md', '.yml', '.yaml', '.json', '.txt', '.sh')
 VOCAB_SKIP_DIRS = ('.git', '__pycache__', '.ruff_cache')
 
 
+def load_local_blacklist():
+    """本机私有词表：~/.claude/tools/doc_check_private_patterns.txt，逐行「模式｜标签」。存在即并入，不存在即跳过。"""
+    p = os.path.expanduser('~/.claude/tools/doc_check_private_patterns.txt')
+    if not os.path.exists(p):
+        return []
+    extra = []
+    with open(p, encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            parts = line.split('｜', 1)
+            if len(parts) == 2:
+                extra.append((parts[0], parts[1]))
+    return extra
+
+
 def check_public_vocab(issues):
-    """第 4 类：全仓扫内部语汇黑名单（2026-10-13 立，源自外部审读发现的件号残留）。"""
+    """第 4 类：全仓扫内部语汇黑名单（本机私有词表存在时并入）。"""
+    vocab = VOCAB_BLACKLIST + load_local_blacklist()
     hits = 0
     for dirpath, dirnames, filenames in os.walk(ROOT):
         dirnames[:] = [d for d in dirnames if d not in VOCAB_SKIP_DIRS]
         for fn in filenames:
             if not fn.endswith(VOCAB_SCAN_EXT):
                 continue
-            if fn == 'doc_check.py':  # 本文件含黑名单模式串本身，跳过自身
-                continue
             fp = os.path.join(dirpath, fn)
             try:
                 t = open(fp, encoding='utf-8', errors='ignore').read()
             except OSError:
                 continue
-            for pat, why in VOCAB_BLACKLIST:
+            for pat, why in vocab:
                 m = re.search(pat, t)
                 if m:
                     rel = os.path.relpath(fp, ROOT)
