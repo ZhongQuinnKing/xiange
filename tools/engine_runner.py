@@ -102,8 +102,8 @@ def kern_to_musicxml(kern_text, out_xml):
     return out_xml
 
 
-# ── 适配器注册表 ────────────────────────────────────────────
-# 每栏：check(inp) 前置检；run(inp, outdir, params) → 产物路径或抛异常。
+# -- Adapter registry --------------------------------------------
+# Each entry: check(inp) precheck; run(inp, outdir, params) -> output paths or raises.
 
 def smt_precheck(inp):
     if os.path.isdir(inp):

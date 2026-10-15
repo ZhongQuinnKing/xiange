@@ -28,7 +28,7 @@ def run(*args):
 
 
 def main():
-    # 模块可导入＝依赖缺失不裸崩（延迟容错）
+    # module imports = no bare crash without deps (late tolerance)
     spec = importlib.util.spec_from_file_location('vv_render', os.path.join(TOOLS, 'vv_render.py'))
     mod = importlib.util.module_from_spec(spec)
     try:

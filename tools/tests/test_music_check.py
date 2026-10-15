@@ -52,13 +52,13 @@ def make_kb(base, omit=None):
 
 
 def main():
-    # ① 库不存在 → rc=2
+    # 1. missing library -> rc=2
     rc, out = run('/nonexistent_kb_probe')
     if rc != 2 or '知识库目录不存在' not in out or 'Traceback' in out:
         fails.append(f'缺库未 rc=2 干净报错 rc={rc}: {out[-120:]}')
 
     with tempfile.TemporaryDirectory() as td:
-        # ② 全过库 → rc=0 且落 OUT
+        # 2. all-pass library -> rc=0 and writes OUT
         kb = make_kb(os.path.join(td, 'kb_ok'))
         report = os.path.join(td, 'report.md')
         rc, out = run(kb, report)
@@ -71,7 +71,7 @@ def main():
             if '# 知识库自动质检报告' not in t or '全部通过' not in t:
                 fails.append(f'OUT 报告内容异常：{t[:120]}')
 
-        # ③ 违规库 → rc=1 并点名两类问题
+        # 3. violating library -> rc=1 naming both problem kinds
         kb_bad = make_kb(os.path.join(td, 'kb_bad'))
         with open(os.path.join(kb_bad, '99-杂.md'), 'w', encoding='utf-8') as fh:
             fh.write('一段话——中间——又来——第三处☃。\n')
@@ -79,7 +79,7 @@ def main():
         if rc != 1 or '破折号' not in out or '混入字符' not in out or 'Traceback' in out:
             fails.append(f'违规未 rc=1 点名 rc={rc}: {out[-160:]}')
 
-        # ④ 域文档缺 → rc=1（引用被指向）
+        # 4. missing domain doc -> rc=1 (the reference is flagged)
         kb_miss = make_kb(os.path.join(td, 'kb_miss'), omit='30-曲式.md')
         rc, out = run(kb_miss)
         if rc != 1 or '曲式域' not in out or 'Traceback' in out:

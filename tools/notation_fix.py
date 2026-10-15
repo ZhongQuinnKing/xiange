@@ -55,7 +55,7 @@ def _findtext(el, name):
     return (c.text or '') if c is not None else None
 
 
-# ---------------- 时间与分组 ----------------
+# ---------------- timing and grouping ----------------
 
 def _beam_unit_quarters(beats, beat_type):
     """一个连杠组的时间宽度（四分音符数）。4/4 → 1.0；6/8 → 1.5；3/8 → 1.5。"""
@@ -155,7 +155,7 @@ def _plan(part, part_index):
             n = len(g)
             for i, e in enumerate(g):
                 e['beam1'] = 'begin' if i == 0 else ('end' if i == n - 1 else 'continue')
-            # 次级符杠：组内连续十六分（≤0.25 四分）段，段长 ≥2 连二级杠 [? 未实测]
+            # Secondary beams: runs of consecutive sixteenths (<=0.25 quarter) within a group, length >=2 get second-level beams [? untested]
             i = 0
             while i < n:
                 if g[i]['dur'] / div <= 0.25 + 1e-9:
@@ -190,7 +190,7 @@ def _plan(part, part_index):
     return plan, dict(groups=n_groups, beamed_notes=n_beamed, stem_notes=n_stem)
 
 
-# ---------------- 文本手术 ----------------
+# ---------------- text surgery ----------------
 
 _NOTE_BLOCK = re.compile(r'<note>.*?</note>', re.S)
 _OLD_STEM = re.compile(r'[ \t]*<stem>[^<]*</stem>[ \t]*\n')
@@ -208,7 +208,7 @@ def _edit_block(block, stem, beams):
             return s
         beam_s = ''.join(f'<beam number="{num}">{val}</beam>' for num, val in beams)
         if '<staff>' in s:
-            # 按 DTD 顺序：stem 在 staff 前、beam 在 staff 后
+            # DTD order: stem before staff, beam after staff
             if stem:
                 s = s.replace('<staff>', f'<stem>{stem}</stem><staff>', 1)
             if beam_s:
@@ -263,7 +263,7 @@ def _fallback_tree(root, plan):
             b = ET.Element('beam', {'number': num})
             b.text = val
             beam_els.append(b)
-        # 按 DTD 顺序：stem 在 staff 前、beam 在 staff 后
+        # DTD order: stem before staff, beam after staff
         staff_pos = None
         for i, c in enumerate(el):
             if _t(c) == 'staff':

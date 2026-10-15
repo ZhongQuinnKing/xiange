@@ -33,7 +33,7 @@ def bars_from_musicxml(path):
     d = {}
     for p in s.parts:
         for mi, m in enumerate(p.getElementsByClass('Measure'), 1):
-            # 小节号缺写时（解析为 0）回退为逐部序位（2026-10-13 修：缺号会致按号聚键全塌）
+            # When a measure number is missing (parses as 0), fall back to sequential position (fixed 2026-10-13: missing numbers collapsed all number-keyed grouping)
             num = m.number if isinstance(m.number, int) and m.number > 0 else mi
             pcs = set()
             for n in m.recurse().notes:
@@ -59,8 +59,8 @@ def notes_from_bekern(path):
             if tok == '.':
                 continue
             t = tok.strip('[](){}')
-            # 大小写都收：kern 记法小写=中央 C 以上、大写=以下；本器只取音高类，故并收
-            # （2026-10-13 修：原只认大写，真实 SMT 输出的 8.g 一类小写音全被丢，B 侧塌成空）
+            # Accept both cases: in kern notation lowercase = above middle C, uppercase = below; this tool only uses pitch class, so accept both
+            # (fixed 2026-10-13: previously uppercase-only; real SMT lowercase pitches like 8.g were all dropped, leaving side B empty)
             m = re.match(r'^([0-9.]*)([A-Ga-g]+)([#-]?)', t)
             if m and m.group(2):
                 acc = 1 if m.group(3) == '#' else (-1 if m.group(3) == '-' else 0)
@@ -157,7 +157,7 @@ def cmd_seq(args):
     tot = len(path)
     print(f'对齐位 {tot}：同音类 {agree}｜异音类 {disagree}｜仅 A 有 {only_a}｜仅 B 有 {only_b}')
 
-    # 同曲现法对照（音高类级·逐小节集合）
+    # Same-piece comparison (pitch-class level, per-measure sets)
     Ab = bars_from_musicxml(args.engine_a)
     Bb = {}
     for (bar, pc, _) in notes_from_bekern(args.engine_b):
@@ -244,7 +244,7 @@ def main():
     p3.set_defaults(func=cmd_seq)
 
     args = ap.parse_args()
-    # 缺文件统一 rc=2 干净报错（2026-10-13）
+    # Missing file: uniform clean rc=2 error (2026-10-13)
     paths = [args.engine_a, args.engine_b] + ([args.truth] if getattr(args, 'truth', None) else [])
     for p in paths:
         if not os.path.exists(p):

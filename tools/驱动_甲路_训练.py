@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# 古琴自训·训练驱动（2026-10-10）
-# 用法：
-#   先设 JIALU_SELF（古琴自训工作根；缺省即报错）
-#   干跑：python 驱动_甲路_训练.py --dry-run
-#   全量：python 驱动_甲路_训练.py --epochs 80
-# 依赖：opencv、numpy、torch、torchvision
-# 许可：MIT（随仓 LICENSE.md）
+# Guqin self-train: training driver (2026-10-10)
+# Usage:
+#   set JIALU_SELF first (guqin self-train work root; missing = error)
+#   dry run: python <this script> --dry-run
+#   full run: python <this script> --epochs 80
+# Deps: opencv, numpy, torch, torchvision
+# License: MIT (see LICENSE.md in the repo)
 import argparse
 import copy
 import csv

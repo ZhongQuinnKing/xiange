@@ -63,23 +63,23 @@ def measure(num, body):
 
 def build_file1():
     m1 = note('C', 4, 480) + note('D', 4, 480) + note('E', 4, 480) + note('F', 4, 480)
-    # m2 首有 forward 480 占位，内容 3.0 拍 → M1，占位该被显式化成休止
+    # m2 has a forward 480 placeholder, content 3.0 beats -> M1; the placeholder should become an explicit rest
     m2 = ('<forward><duration>480</duration></forward>'
           + note('G', 4, 960) + note('A', 4, 480))
-    # m3 内容 3.0 拍、尾部缺口 1.0 → M1
+    # m3 content 3.0 beats, trailing gap 1.0 -> M1
     m3 = note('B', 4, 960) + note('C', 5, 480)
-    # m4 内容 5.0 拍、末音 2.0 越界 1.0，截得动 → M2
+    # m4 content 5.0 beats, last note 2.0 over by 1.0, trimmable -> M2
     m4 = note('D', 5, 480) + note('E', 5, 480) + note('F', 5, 480) + note('G', 5, 960)
-    # m5 内容 5.0 拍、末音整音（1.0）全在界外 → M2 拦下 → 人裁
+    # m5 content 5.0 beats, last whole note (1.0) fully outside -> M2 blocks -> human
     m5 = (note('A', 5, 480) + note('B', 5, 480) + note('C', 6, 480)
           + note('D', 6, 480) + note('E', 6, 480))
-    # m6 v1 全音符 + v2 四个四分音：和 8.0、占用 4.0 → M0
+    # m6 v1 whole note + v2 four quarters: sum 8.0, occupancy 4.0 -> M0
     m6 = (note('C', 3, 1920) + '<backup><duration>1920</duration></backup>'
           + note('E', 4, 480, '2') + note('F', 4, 480, '2')
           + note('G', 4, 480, '2') + note('A', 4, 480, '2'))
-    # m7 只写 1.0 拍 → 缺 3.0 超半节 → 人裁
+    # m7 only 1.0 beat written -> 3.0 short, over half a measure -> human
     m7 = note('C', 4, 480)
-    # m8 并轨且不足：和 3.0、占用 2.0 → 人裁
+    # m8 merged and short: sum 3.0, occupancy 2.0 -> human
     m8 = (note('C', 3, 960) + '<backup><duration>960</duration></backup>'
           + '<forward><duration>240</duration></forward>' + note('E', 4, 480, '2'))
     return (HEAD + ''.join(measure(i + 1, b) for i, b in
@@ -181,7 +181,7 @@ def main():
             TR.main()
     finally:
         sys.argv = argv2
-    # 裁决直接读回填件的 JSON 更稳；这里用报告文本对账
+    # reading the filled JSON directly is steadier; here we reconcile via report text
     m = re.search(r'机械裁 (\d+) 处（已回填 (\d+)｜判定不裁 (\d+)）', text)
     multi = re.search(r'多源裁 (\d+) 处', text)
     human = re.search(r'人裁\s+(\d+) 处', text)
@@ -205,7 +205,7 @@ def main():
               f"m{mno} 补休止：既有音符（{len(a[mno]['notes'])} 个）起点时值一格不动")
         check(len(b[mno]['rests']) == len(a[mno]['rests']) + 1,
               f"m{mno} 只多出一个休止（{a[mno]['rests']} → {b[mno]['rests']}）")
-    # m4 是截短案：只许末音时长缩短 1.0，其余音符与起点全不动
+    # m4 is a trim case: only the last note's duration shrinks by 1.0; all other notes and onsets untouched
     na, nb = a['4']['notes'], b['4']['notes']
     check(abs(b['4']['S'] - 4.0) < 1e-6, f"m4 回填后时值和 {b['4']['S']} ＝ 4.0")
     check(len(na) == len(nb) and [x[:1] + x[2:] for x in na] == [x[:1] + x[2:] for x in nb],

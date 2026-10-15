@@ -30,7 +30,7 @@ def run(*args):
 
 def main():
     with tempfile.TemporaryDirectory() as td:
-        # ① 合成 MIDI：三音分置 offset 0／4／8，锚音 offset 16（定标尺=末事件）
+        # 1. synthetic MIDI: three notes at offsets 0/4/8, anchor at offset 16 (ruler = last event)
         sc = stream.Stream()
         for off, midi in ((0.0, 60), (4.0, 64), (8.0, 67), (16.0, 72)):
             n = note.Note(midi)
@@ -48,7 +48,7 @@ def main():
             if any({(pc + 5) % 12 for pc in b0[k]} != b5[k] for k in b0):
                 fails.append('load_machine 移调未按 +5 生效')
 
-        # ② 手工页数据解析（[?] 与 R 跳过；RH／LH 合并入小节集合）
+        # 2. manual page-data parsing ([?] and R skipped; RH/LH merged into measure sets)
         page = os.path.join(td, 'p1_data.md')
         with open(page, 'w', encoding='utf-8') as fh:
             fh.write('## m1\nRH: [C4,E4,G4]\nLH: [C3]\n## m2\nRH: [D4,F#4,?]\n')
@@ -56,7 +56,7 @@ def main():
         if mb.get(1) != {0, 4, 7} or mb.get(2) != {2, 6}:
             fails.append(f'load_manual 解析异常：{mb}')
 
-        # ③ CLI 契约
+        # 3. CLI contract
         rc, out = run('--bogus')
         if rc != 2 or 'Traceback' in out:
             fails.append(f'坏参数未 rc=2 干净退出 rc={rc}')
@@ -67,7 +67,7 @@ def main():
         if rc != 2 or '不存在' not in out or 'Traceback' in out:
             fails.append(f'缺手工数据未 rc=2 干净报错 rc={rc}: {out[-120:]}')
 
-        # ④ 合成双件同跑出数（机器 bar1 与手工 m1 有交集）
+        # 4. synthetic pair runs together (machine bar1 intersects manual m1)
         rc, out = run('--machine', mid, '--manual', page)
         if rc != 0 or '可比较小节' not in out or 'Traceback' in out:
             fails.append(f'合成样本未跑通 rc={rc}: {out[-160:]}')

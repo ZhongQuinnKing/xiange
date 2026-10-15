@@ -9,13 +9,13 @@ omr_eval — 统一评价引擎（口径标准 v1.0 的实体）
 判据口径见同目录《口径标准.md》，本文件不另立说法。
 
 用法:
-    # 双读 md vs MusicXML（引擎输出）
+    # Dual-read md vs MusicXML (engine output)
     python3 omr_eval.py --truth jp:/var/tmp/jp/pages/page1_data.md --engine mx:/var/tmp/b_rows/row_01.omr.musicxml
 
-    # 简谱真值 vs MusicXML（1=G）
+    # Numbered-score ground truth vs MusicXML (1=G)
     python3 omr_eval.py --truth jp:/path/truth.md --engine mx:/path/out.musicxml --key G
 
-    # 纯结构体检
+    # Pure structural check
     python3 omr_eval.py --engine mx:/path/out.musicxml --inspect
 """
 import os
@@ -24,11 +24,11 @@ import json
 import argparse
 from collections import OrderedDict, Counter
 
-# ── 音名 → 半音数 ─────────────────────────────────────────────
+# -- pitch name -> semitone number ---------------------------------
 _PC = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
-# 简谱音级 → 相对主音的半音数（1=主音）
+# Numbered degree -> semitones above tonic (1 = tonic)
 _DEGREE = {1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: 11}
-# 主音名 → 半音数（简谱 1=X 的 X）
+# Tonic name -> semitone number (the X in 1=X)
 _KEYTONIC = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
 
 
@@ -44,9 +44,9 @@ class NoteEvent:
         self.flags = flags or []    # 'tie' / 'rest' / '?' 等标记
 
 
-# ═══════════════════════════════════════════════════════════════
-# 解析器
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
+# Parsers
+# ===============================================================
 
 def parse_jp_md(path):
     """双读 md 格式：## mN 分段，RH:/LH: 行，[音名,...]:时值（(tie) 标记延音）"""
@@ -67,7 +67,7 @@ def parse_jp_md(path):
                     body = re.sub(r'（[^）]*）', '', body)        # 去中文括号注释
                     body = re.sub(r'\(tie\)', '~TIE~', body)     # 延音标记暂存
                     body = re.sub(r'\([^)]*\)', '', body)        # 去其余英文括号注释
-                    # 只有形如 [音名]:数字 或 R:数字 的才是数据（注解里的[..]引用不含':数字'，自然滤掉）
+                    # Only [note]:number or R:number are data (annotation [..] refs lack ':number' and filter out naturally)
                     for tok in re.finditer(r'(\[[A-Ga-g#b\d,\s?\-]*\]|R|~TIE~)\s*(?::\s*([0-9.]+))?', body):
                         raw = tok.group(1)
                         if raw == '~TIE~':
@@ -111,7 +111,7 @@ def parse_jianpu(path, key='G', base_octave=4):
     音级 '1'-'7'，前缀 b/#，后缀 +/- 八度，'0'=休止。
     返回 NoteEvent 列表（part='M' 单声部）。
     """
-    # 用 exec 安全读入 MELODY 字典（该文件是数据文件，只有字面量）
+    # Safely load the MELODY dict via exec (that file is data-only, literals only)
     src = open(path, encoding='utf-8').read()
     m = re.search(r'MELODY\s*=\s*(\{.*?\n\})', src, re.S)
     if not m:
@@ -149,7 +149,7 @@ def parse_musicxml(path):
                     mnum = int(re.sub(r'\D', '', str(mnum)) or 0)
                 except ValueError:
                     continue
-            # 小节内按 onset 分组
+            # Group within measure by onset
             at_onset = OrderedDict()
             for el in meas.recurse().notesAndRests:
                 off = float(el.offset)
@@ -178,9 +178,9 @@ def parse_musicxml(path):
     return events
 
 
-# ═══════════════════════════════════════════════════════════════
-# 四级度量
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
+# Four-level metric
+# ===============================================================
 
 def pc_set(ev):
     return set(p % 12 for p in ev.pitches)
@@ -307,7 +307,7 @@ def evaluate(truth_events, engine_events, label_truth='真值', label_engine='�
             tpc, epc = pc_set(t), pc_set(e)
             exact = (tpc == epc)
             if exact:
-                # 八度核对：同一音高类下比对八度
+                # Octave check: compare octaves within the same pitch class
                 t_oct = [(p % 12, p // 12) for p in t.pitches]
                 e_oct = [(p % 12, p // 12) for p in e.pitches]
                 if sorted(t_oct) != sorted(e_oct):
@@ -317,7 +317,7 @@ def evaluate(truth_events, engine_events, label_truth='真值', label_engine='�
                     continue
                 result['pitch_exact'] += len(t.pitches)
                 result['pitch_matched'] += len(t.pitches)
-                # 时值级：事件总长比较（口径标准 v1.0：总长错 与 切分错 分开计）
+                # Duration level: compare total event length (standard v1.0: total-length errors and segmentation errors counted separately)
                 ts, es = sum(t.durs), sum(e.durs)
                 same = dur_equal(ts, es)
                 if same:
@@ -330,7 +330,7 @@ def evaluate(truth_events, engine_events, label_truth='真值', label_engine='�
                     else:
                         result['dur_split_err'] += 1
             else:
-                # 部分命中计分（音高类交集）
+                # Partial-hit scoring (pitch-class intersection)
                 inter = len(tpc & epc)
                 result['pitch_matched'] += inter
                 if inter > 0:
@@ -338,7 +338,7 @@ def evaluate(truth_events, engine_events, label_truth='真值', label_engine='�
                 else:
                     result['red'] += 1
                 result['detail_red'].append((m, '音高', t.pitches, e.pitches))
-        # 未配对：真值漏认（引擎缺音）
+        # Unmatched: missed ground-truth note (engine dropped it)
         for t in t_un:
             result['red'] += 1
             result['detail_red'].append((m, '漏', t.pitches, []))
@@ -378,7 +378,7 @@ def report_card(result, title=''):
     return '\n'.join(lines)
 
 
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 
 def load(source):
     """'jp:路径' / 'jianpu:路径[:key]' / 'mx:路径' → 事件表"""

@@ -53,7 +53,7 @@ def _findtext(el, name):
     return (c.text or '') if c is not None else None
 
 
-# ── 解析层 ──────────────────────────────────────────────────
+# -- parsing layer ------------------------------------------
 
 def parse_parts(root):
     """返回 {part_id: {'measures': [(mno, implicit, attrs, notes)], 'name': str}}。"""
@@ -136,7 +136,7 @@ def measure_events(notes, div=1):
     return evs, onset, tail
 
 
-# ── 规则：W3 拍号与小节对账 ─────────────────────────────────
+# -- rule W3: time-signature vs measure reconciliation ----------
 
 def rule_w3(mno, implicit, attrs, notes, state, ctx):
     if implicit:
@@ -158,7 +158,7 @@ def rule_w3(mno, implicit, attrs, notes, state, ctx):
             f'小节总时值 {total}（divisions）与拍号 {beats}/{bt} 应得 {expect} 不符')
 
 
-# ── 规则：W1 附点位置 ───────────────────────────────────────
+# -- rule W1: dot placement ---------------------------------
 
 def rule_w1(mno, implicit, attrs, notes, state, ctx):
     """简单拍（分母 4）：附点音不得越过物理小节末（硬）；
@@ -189,7 +189,7 @@ def rule_w1(mno, implicit, attrs, notes, state, ctx):
                 f'附点八分起于第 {on + 1:.2f} 拍、尾落 {tl:.2f} 拍，后无同声部音相接（惯例）')
 
 
-# ── 规则：W2 连音线闭合 ─────────────────────────────────────
+# -- rule W2: slur closure ----------------------------------
 
 def rule_w2(parts):
     for pid, p in parts.items():
@@ -217,7 +217,7 @@ def rule_w2(parts):
                 f'连音线起而未止（悬置）：{key[0][0]}{key[0][1]} v{key[1]}')
 
 
-# ── 规则：W5 变音记号 ───────────────────────────────────────
+# -- rule W5: accidentals -----------------------------------
 
 def rule_w5(mno, implicit, attrs, notes, state, ctx):
     seen = set()
@@ -255,7 +255,7 @@ def run_rules(parts):
     rule_w2(parts)
 
 
-# ── 报告层 ──────────────────────────────────────────────────
+# -- report layer -------------------------------------------
 
 def report_text(path):
     lines = [f'谱面规范查对（yuchi_score_check）：{path}']

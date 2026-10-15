@@ -68,7 +68,7 @@ CODE_NAME = {'W2': '小节时值', 'W1': '声部重叠', 'E1': '声部交叉',
              'E2': '和弦音集', 'E3': '平行五八度', 'E4': '跨度过大'}
 
 
-# ══════════════════════ 谱面统计（与 theory_check W2 同口径） ══════════════════════
+# ====================== score stats (same criterion as theory_check W2) ======================
 
 def union_len(els):
     """时值区间并集时长（并轨去重）"""
@@ -112,7 +112,7 @@ def collect_stats(score):
     _seen = {}
     for ps in score.parts:
         name = ps.partName or ps.id
-        # [本地适配 2026-10-11] 同名声部防键塌陷（out[(name, 小节)] 会互相覆盖）
+        # [local adaptation 2026-10-11] guard key collapse for same-named voices (out[(name, measure)] would overwrite)
         if str(name) in _seen:
             _seen[str(name)] += 1
             name = f'{name}#{_seen[str(name)]}'
@@ -147,7 +147,7 @@ def collect_stats(score):
     return out
 
 
-# ══════════════════════ 机械裁判据（纯函数，可单测） ══════════════════════
+# ====================== mechanical criteria (pure functions, unit-testable) ======================
 
 def mechanical_verdict(st):
     """给定小节统计 → 机械裁判定。
@@ -178,7 +178,7 @@ def mechanical_verdict(st):
         if (S - E) > (me - E) + TOL:
             return {'规则': None, '挡': f'越界量 {round(me - E, 6):g} 拍吸收不了全部超出 '
                                         f'{round(S - E, 6):g} 拍，余量在并轨处'}
-        # 截得动吗：从最末音起，任一步会把某音削没就放手（削没＝归属问题，不是时值问题）
+        # Can it be trimmed: from the last note, stop if any step would erase a note entirely (erasure = ownership issue, not duration)
         need = S - E
         for off, dur, end in st.get('spill', []):
             if need <= TOL:
@@ -197,7 +197,7 @@ def mechanical_verdict(st):
     return {'规则': None, '挡': '[?] 判据未覆盖的形态'}
 
 
-# ══════════════════════ 清单（发现环） ══════════════════════
+# ====================== checklist (discovery loop) ======================
 
 def part_of_desc(code, desc):
     """从 theory_check 的详情文本里取回声部名（W2 详情格式：'LH 小节时值 5.0 ≠ 拍号 4.0'）"""
@@ -311,7 +311,7 @@ def scan_records(path, only=None):
     return score, records, stats, counts
 
 
-# ══════════════════════ 外科式 XML 补丁 ══════════════════════
+# ====================== surgical XML patches ======================
 
 ELEM_RE = re.compile(r'<(note|backup|forward|attributes|direction|barline|print|sound|harmony)\b')
 
@@ -501,7 +501,7 @@ def apply_edits(text, edits):
     return text
 
 
-# ══════════════════════ 多源裁（第二期接口的轻量前哨） ══════════════════════
+# ====================== multi-source arbitration (lightweight outpost for the phase-2 interface) ======================
 
 def second_stats(path):
     if not path or not os.path.exists(path):
@@ -523,7 +523,7 @@ def second_ok(ss, part, mno, E):
     return abs(st['S'] - E) <= 0.02
 
 
-# ══════════════════════ 三色报 ══════════════════════
+# ====================== three-color report ======================
 
 def three_color_text(path, records, tail_lines=None):
     m = OrderedDict()
@@ -567,7 +567,7 @@ def three_color_text(path, records, tail_lines=None):
     return '\n'.join(L)
 
 
-# ══════════════════════ scan ══════════════════════
+# ====================== scan ======================
 
 def cmd_scan(args):
     score, records, stats, counts = scan_records(args.file, only=args.only)
@@ -599,7 +599,7 @@ def cmd_scan(args):
     return 0
 
 
-# ══════════════════════ resolve ══════════════════════
+# ====================== resolve ======================
 
 def cmd_resolve(args):
     score, records, stats, counts = scan_records(args.file, only=args.only)
@@ -651,7 +651,7 @@ def cmd_resolve(args):
                         edits.append((base + s0, base + e0, new))
                         r['裁决']['改动'].append(f'm{mno} {part}：{w}')
             continue
-        # 机械裁不定 → 多源裁（有第二源才启用）
+        # mechanical resolve undecided -> multi-source arbitration (only with a second source)
         if ss is not None:
             ok = second_ok(ss, part, mno, st['E'] if st else 0)
             if ok:
@@ -664,7 +664,7 @@ def cmd_resolve(args):
             continue
         r['裁决'].update(档='人裁', 规则=None, 动作=f"人裁：{v['挡']}")
 
-    # 落盘
+    # write to disk
     changed = len(edits)
     out_path = args.out
     if changed and not args.dry_run:
@@ -683,7 +683,7 @@ def cmd_resolve(args):
     else:
         print('无字符级改动，未写输出件（判定不裁的项已在三色报里入账）。')
 
-    # 复检：输出件再跑一遍 theory_check
+    # recheck: run theory_check once more on the output
     tail = []
     if changed and not args.dry_run:
         TC.FINDINGS.clear()

@@ -97,10 +97,10 @@ def open_score(pg, xml_path):
       return false;
     }''')
     if not clicked:
-        # 回落：Playwright 文本定位触发文件选择器
+        # Fallback: trigger the file chooser via Playwright text locating
         pg.get_by_text('Open score', exact=True).first.click()
         return
-    # JS 点击后文件选择器同样会弹出，交给调用方 expect_file_chooser 捕获
+    # Clicking via JS also pops the file chooser; the caller's expect_file_chooser captures it
     pg.wait_for_timeout(300)
 
 
@@ -118,7 +118,7 @@ def convert_file(pg, xml_path, outdir, view):
         pg.evaluate(JS_CLICK, 'As printed')
         pg.wait_for_timeout(3000)
 
-    # 判定落档：简谱档才有左侧源码区与 .score-page-wrap 谱面
+    # Landing check: only numbered-score files show the left source pane and .score-page-wrap score area
     page_svgs = pg.evaluate('''() => [...document.querySelectorAll('.score-page-wrap svg')]
       .filter(s => s.outerHTML.length > 800).map(s => s.outerHTML)''')
     src_text = pg.evaluate('''() => {
@@ -133,8 +133,8 @@ def convert_file(pg, xml_path, outdir, view):
         with open(os.path.join(outdir, f'{stem}.123.txt'), 'w') as f:
             f.write(src_text + '\n')
     for i, svg in enumerate(page_svgs, 1):
-        # 字体归一：页文本走 PingFang 系统栈（许可不清，且 cairo 常落兜底字体）；
-        # 转换层换成 OFL 中文字体，PDF/PNG 内嵌即随包许可（对齐 export_pack 口径）
+        # Font normalization: page text used the PingFang system stack (license unclear, and cairo often fell back anyway);
+        # the conversion layer now uses an OFL Chinese font, so embedded PDF/PNG fonts are pack-licensed (aligned with export_pack policy)
         svg = svg.replace('font-family="PingFang SC, Microsoft YaHei, sans-serif"',
                           'font-family="Noto Sans SC"')
         with open(os.path.join(outdir, f'{stem}_p{i}.svg'), 'w') as f:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-theory_check — 乐理错检器（护城河第④层：乐理解读层）
+theory_check — 乐理错检器（乐理解读层）
 
 模型认字，知识库读通。谱面出来先过乐理关：机器能机械检的乐理错当场报，
 人（用户）只管艺术判断——这条分工写死。
@@ -67,12 +67,12 @@ def check_file(path):
         print('无谱表')
         return
 
-    # 每声部：小节 → [(onset, pitches_sorted, dur, offset)]
+    # Per voice: measure -> [(onset, pitches_sorted, dur, offset)]
     part_events = OrderedDict()
     _seen = {}
     for pi, ps in enumerate(parts):
         name = ps.partName or f'P{pi + 1}'
-        # [本地适配 2026-10-11] 同名声部防塌陷（单 part 双谱表拆分后同名）
+        # [local adaptation 2026-10-11] guard same-named voices (single part split into two staves)
         if str(name) in _seen:
             _seen[str(name)] += 1
             name = f'{name}#{_seen[str(name)]}'
@@ -86,8 +86,8 @@ def check_file(path):
                     mno = int(''.join(ch for ch in str(mno) if ch.isdigit()) or 0)
                 except ValueError:
                     mno = 0
-            # 号缺失或重号时回退逐部序位（2026-10-13 修：号作键会把无号文件塌成只剩末小节，
-            # 曾致全曲只检最后一节而假报「干净」）
+            # Missing/duplicate numbers fall back to sequential position (fixed 2026-10-13: number-keying collapsed unnumbered files to the last measure alone,
+            # once making a whole piece check only its last measure and falsely report "clean")
             if mno <= 0 or mno in evs:
                 mno = mi
             lst = []
@@ -109,7 +109,7 @@ def check_file(path):
 
     names = list(part_events.keys())
 
-    # 键盘手判定：声部名含 RH/right/左手等 → 高键盘手；判定"谁应当在高处"
+    # Hand detection: voice names containing RH/right/left etc. decide who should sit higher
     def is_lower_staff(n):
         s = n.lower()
         return ('lh' in s) or ('left' in s) or ('低' in s) or ('bass' in s) or ('b' == s)
@@ -117,11 +117,11 @@ def check_file(path):
     lower_staffs = [n for n in names if is_lower_staff(n)]
     upper_staffs = [n for n in names if n not in lower_staffs]
     if not lower_staffs and len(names) >= 2:
-        # 无左手标记：按谱表顺序，第一个为高、其后为低
+        # No hand marks: follow staff order, first is high, the rest low
         upper_staffs = [names[0]]
         lower_staffs = names[1:]
 
-    # ── E4 空拍不可弹（同拍跨度）+ E2 音簇 ─────────────────
+    # -- E4 unplayable same-beat span + E2 tone clusters -------------
     for name, evs in part_events.items():
         for mno, lst in evs.items():
             for onset, ps, dur in lst:
@@ -131,8 +131,8 @@ def check_file(path):
                         add('严重', 'E4', mno,
                             f'{name} 同拍跨度 {span} 半音（超默认可及上限 {SPAN_LIMIT}）：{ps}')
 
-    # ── E1 声部交叉（应在上者低于应在下者，或两者相交）─────
-    #    设计性交叉（主客易位段/织体穿行）按参数放行；放行照实留痕，未匹配名照报
+    # -- E1 voice crossing (the upper voice below the lower, or intersecting) -------
+    #    designed crossings (hand-swap passages / texture weaves) pass via parameter; passes are logged, unmatched names still reported
     if E1_EXEMPT:
         unmatched = [n for n in E1_EXEMPT if n not in part_events]
         if unmatched:
@@ -155,12 +155,12 @@ def check_file(path):
                             add('严重', 'E1', mno,
                                 f'{lo_name}({lmn}) 高于 {hi_name}({hmn})，交叉 {lmn - hmn} 半音')
 
-    # ── E3 平行五八度（跨声部，按全曲时间线对齐判定，跨小节接续）───────
+    # -- E3 parallel fifths/octaves (cross-voice, judged on the whole-piece timeline, continuing across measures) ------
     if upper_staffs and lower_staffs:
         for lo_name in lower_staffs:
             for hi_name in upper_staffs:
                 a_evs, b_evs = part_events[hi_name], part_events[lo_name]
-                # 全曲时间线：(小节, onset) → pitches
+                # Whole-piece timeline: (measure, onset) -> pitches
                 a_tl = []
                 b_tl = []
                 for mno in sorted(a_evs):
@@ -174,7 +174,7 @@ def check_file(path):
                 common = sorted(set(a_map) & set(b_map))
                 for k in range(len(common) - 1):
                     key1, key2 = common[k], common[k + 1]
-                    # 单音对单音才检（和弦由音集对位判，复杂，暂不出手）
+                    # Only note-vs-note is checked (chords would need set-based counterpoint; deferred)
                     if len(a_map[key1]) != 1 or len(b_map[key1]) != 1:
                         continue
                     if len(a_map[key2]) != 1 or len(b_map[key2]) != 1:
@@ -194,15 +194,15 @@ def check_file(path):
                             f'{hi_name} 与 {lo_name} 连续同向构成平行{("八度" if c1 == "8ve" else "五度")}'
                             f'（{a1}/{b1} → {a2}/{b2}）')
 
-    # ── E5 声部密度骤降（同手音数守恒；"音类在、声部掉"的成组内声部缺失）──
-    # 判据：同一声部、同一小节内，一个持续 >= 2 拍的多音和弦（>=2 音）之后
-    #       紧跟的下一个发音点，音数比该和弦少 >= 2 个。
-    # 依据：持续和弦（柱式或滚奏）＝该声部处于"多音持续"织体，下一个发音点应延续
-    #       同一织体（换和弦或再陈述）。骤降成单音/双音，是滚奏/柱式内声部成组丢失的
-    #       典型症状；这类错的和弦组成音类往往还在（被另一声部或另一八度顶班），
-    #       音类级检查放行，故用同手音数守恒单列一条。
-    # 边界：持续和弦后合法地接单音旋律线（如 3/4 舞曲"和弦＋单音"收句）同样触发
-    #       ——属提示不属定案，故列"轻"（人可抽验），不作自动改谱依据。
+    # -- E5 sudden voice-density drop (same-hand note-count conservation; grouped inner-voice loss where pitch classes remain) --
+    # Criterion: in one voice and measure, after a multi-note chord (>=2 notes) sustained >= 2 beats
+    #       the next attack has >= 2 fewer notes than the chord.
+    # Rationale: a sustained chord (block or rolled) means the voice is in a multi-note texture; the next attack should continue
+    #       the same texture (chord change or restatement). Dropping to one or two notes is a typical sign of grouped inner-voice loss in rolled/block textures;
+    #       the missing chord tones often remain (covered by another voice or octave), so pitch-class checks pass,
+    #       hence this separate same-hand note-count rule.
+    # Edge: a legal monophonic melody after a sustained chord (e.g. waltz "chord + single note" cadences) also fires
+    #       -- it is a hint, not a verdict, so it is minor (spot-checkable) and never auto-edits the score.
     for name, evs in part_events.items():
         for mno, lst in evs.items():
             lst_sorted = sorted(lst, key=lambda x: x[0])
@@ -220,8 +220,8 @@ def check_file(path):
                         f'{name} 持续和弦 {ps1}（{d1} 拍）后骤降为 {ps2}'
                         f'（{n1}→{n2} 音）')
 
-    # ── W1 音节交叠：前一音未完，后起音在前音音域内（潜在声部交叉/叠置）
-    #     后起音整体高于前音＝可疑交叠（轻）；整体含在前音范围内＝常规延续，不报
+    # -- W1 note overlap: a new attack starts inside the previous note's span (potential crossing/stacking)
+    #     new note entirely above the previous = suspect overlap (minor); entirely inside = normal continuation, not reported
     for name, evs in part_events.items():
         for mno, lst in evs.items():
             lst_sorted = sorted(lst, key=lambda x: x[0])
@@ -252,8 +252,8 @@ def check_measure_lengths(score):
                 continue
             expect = ts.barDuration.quarterLength
             total = sum(float(el.quarterLength) for el in els)
-            # 阈值 >= 1 拍：差值恰 1.0（如 4/4 里 5 拍小节）也要报——
-            # 旧判据 > 1.0 严格大于，把"多整整一拍"这个最典型错型漏成盲区
+            # Threshold >= 1 beat: a difference of exactly 1.0 (e.g. a 5-beat measure in 4/4) must also report --
+            # the old strict > 1.0 missed the most typical case, a full extra beat
             if abs(total - expect) >= 1.0 - 1e-6 and total > 0.5:
                 add('轻', 'W2', meas.number,
                     f'{ps.partName or "谱表"} 小节时值 {total} ≠ 拍号 {expect}')

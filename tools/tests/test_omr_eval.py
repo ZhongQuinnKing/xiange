@@ -21,7 +21,7 @@ import tempfile
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 from omr_eval import parse_jp_md, evaluate
 
-# 内嵌测试谱（双读 jp-md 格式，8 小节：和弦/单音/休止/混合节奏齐备）
+# Embedded test score (dual-read jp-md format, 8 measures: chords/single notes/rests/mixed rhythms)
 _FIXTURE = """# 自测例题（钢琴小曲）
 速度: ♩=80  拍号: 4/4
 
@@ -109,33 +109,33 @@ def main():
         mark = '✓' if cond else '✗'
         print(f'{mark} {name}: {detail}')
 
-    # 1 自比
+    # 1. self-compare
     r = evaluate(ev_t, parse_jp_md(truth_path), '真值', '同源')
     check('自比全绿', r['red'] == 0 and r['yellow'] == 0,
           f"绿{r['green']} 黄{r['yellow']} 红{r['red']}")
 
-    # 2 全低八度
+    # 2. all one octave lower
     p2 = write_tmp('low8', transform_names(src, octaves=-1))
     r2 = evaluate(ev_t, parse_jp_md(p2), '真值', '全低八度')
     check('低八度被标', r2['octave_diff'] > 0 and r2['green'] == 0,
           f"八度差{r2['octave_diff']} 绿{r2['green']} 红{r2['red']}")
 
-    # 3 全升大三度（音名全错）。小样谱里移调后偶然命中偏多（和弦密集处），
-    #   此场景的验收重心是"红量显著"，命中率阈值按样谱规模放宽到 40%；
-    #   真正要拦的失败态是判据失灵（红=0 或几近全绿）
+    # 3. all up a major third (all names wrong). On a tiny sample, transposition scores accidental hits (dense chords),
+    #   so acceptance here centers on "clearly red"; the hit-rate threshold relaxes to 40% for this sample size;
+    #   the failure to catch is criterion death (red=0 or nearly all green)
     p3 = write_tmp('m3up', transform_names(src, semitones=4))
     r3 = evaluate(ev_t, parse_jp_md(p3), '真值', '全升大三度')
     hit_rate = r3['pitch_matched'] / max(1, r3['truth_total'])
     check('大三度平移大量红', r3['red'] > 20 and hit_rate < 0.40,
           f"红{r3['red']} 命中率{hit_rate:.0%}")
 
-    # 4 时值减半（成对保持，音高不动）→ 黄
+    # 4. durations halved (pairing preserved, pitches unchanged) -> yellow
     p4 = write_tmp('durhalf', scale_durs(src, 0.5))
     r4 = evaluate(ev_t, parse_jp_md(p4), '真值', '时值减半')
     check('时值错判黄不判红', r4['yellow'] > 0 and r4['red'] == 0 and r4['green'] == 0,
           f"绿{r4['green']} 黄{r4['yellow']} 红{r4['red']}")
 
-    # 5 删一个事件 → 漏
+    # 5. delete one event -> miss
     first = re.search(r'(\[[^\]]*\]:[0-9.]+)', src)
     p5 = write_tmp('drop1', src.replace(first.group(1), '', 1))
     r5 = evaluate(ev_t, parse_jp_md(p5), '真值', '删一事件')

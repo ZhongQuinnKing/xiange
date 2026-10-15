@@ -102,7 +102,7 @@ def parts_of(score):
     _seen = {}
     for i, p in enumerate(src):
         name = p.partName or getattr(p, 'id', None) or f'声部{i+1}'
-        # [本地适配 2026-10-11] 同名声部防塌陷（单 part 双谱表按谱表拆分后同名，字典会互相覆盖）
+        # [local adaptation 2026-10-11] guard same-named voices (single part split into two staves yields duplicate names; dicts would overwrite each other)
         if str(name) in _seen:
             _seen[str(name)] += 1
             name = f'{name}#{_seen[str(name)]}'
@@ -147,14 +147,14 @@ def inspect(path):
         print(f"  音符 {len(items)} 个（含和弦 {len(chords)} 个）")
         if pitches:
             print(f"  音域: {min(pitches)} - {max(pitches)} (跨度 {max(pitches)-min(pitches)} 半音)")
-            # 单音声部：看相邻跳进
+            # Monophonic voice: look at adjacent leaps
             if len(pitches) > 4 and len(chords) == 0:
                 jumps = [abs(pitches[i] - pitches[i-1]) for i in range(1, len(pitches))]
                 big = [(i, pitches[i-1], pitches[i]) for i, j in enumerate(jumps) if j >= 12]
                 if big:
                     issues.append(f"{name}: {len(big)} 处相邻音超八度跳进，疑似八度误判（首处 {big[0][1] if big else ''}→{big[0][2] if big else ''}）")
                     print(f"  ⚠ 超八度跳进 {len(big)} 处")
-        # 时值分布
+        # Duration distribution
         durs = Counter(round(float(el.quarterLength), 3) for _, el in items)
         odd = {d: c for d, c in durs.items() if d not in [round(x, 3) for x in STD_DURS] and c >= 2}
         if odd:
@@ -162,14 +162,14 @@ def inspect(path):
             issues.append(f"{name}: 非常规时值 {[(d, c) for d, c in odd_top]}（疑似量化不准）")
             print(f"  ⚠ 非常规时值: {odd_top}")
 
-    # 同声部内重叠（真重叠：前音结束越过后音起点；全局坐标统一判据）
+    # Within-voice overlap (real overlap: previous note ends past the next note's onset; one global-coordinate criterion)
     for name, items in parts.items():
         ovs = find_overlaps(items)
         if ovs:
             issues.append(f"{name}: {len(ovs)} 处音符重叠（同声部内音没有正确断开）")
             print(f"  ⚠ {name} 有 {len(ovs)} 处自重叠")
 
-    # 和弦密度
+    # Chord density
     dense = 0
     for name, items in parts.items():
         for _, el in items:
@@ -178,7 +178,7 @@ def inspect(path):
     if dense:
         issues.append(f"超过 6 音的和弦 {dense} 处（疑似把多声部混进一个和弦）")
 
-    # 跨度：默认可及上限（大十三度），超了提示核对
+    # Span: default reachable ceiling (major thirteenth); beyond it flags for review
     span_hits = span_check(parts)
     if span_hits:
         span_hits.sort(key=lambda x: -x[2])
@@ -202,7 +202,7 @@ def fix(in_path, out_path):
     score = load(in_path)
     changes = []   # 被改动音符明细（字符串行）
 
-    # 改前自动备份原文件（.orig 只留第一份，不覆盖）
+    # Auto-backup before editing (.orig keeps the first copy only, never overwritten)
     bak = in_path + '.orig'
     if os.path.exists(bak):
         print(f"原文件备份已存在（保留最初版）: {bak}")
@@ -215,14 +215,14 @@ def fix(in_path, out_path):
         nm = el.nameWithOctave if isinstance(el, note.Note) else f'和弦({len(el.pitches)}音)'
         return nm, float(el.getOffsetInHierarchy(score))
 
-    # 量化前快照（量化是最沉默的一步，改动也要可见）
+    # Pre-quantization snapshot (quantization is the quietest step; its edits must stay visible)
     all_els = [el for p in (score.parts if score.parts else [score])
                for el in p.recurse().notesAndRests
                if isinstance(el, (note.Note, chord.Chord))]
     snap = {id(el): (float(el.offset), float(el.quarterLength)) for el in all_els}
 
-    # 先量化：扒谱出的零碎时值里既有普通音也有三连音，
-    # 同时保留 2/3/4 分法，否则三连音会被吸到普通音值上，节奏整个错乱
+    # Quantize first: transcription yields both plain and triplet values,
+    # keeping the 2/3/4 split; otherwise triplets get absorbed into plain values and the rhythm breaks
     try:
         score.quantize([2, 3, 4], processOffsets=True, processDurations=True, inPlace=True)
     except Exception as e:
@@ -262,8 +262,8 @@ def fix(in_path, out_path):
                 nm, off = tag(el)
                 changes.append(f"[吸附] 全局{off:7.2f}拍 {nm}: 时值 {q:.3f}→{nq}")
 
-        # 去重叠：统一判据（全局坐标）定位，前音截短不越过后音起点；
-        # 截短量吸附用 floor（≤空间的标准值），防吸大后再生重叠
+        # De-overlap: locate by the unified criterion (global coordinates); shorten the previous note without crossing the next onset;
+        # snap the shortening with floor (<= the available standard value) so rounding up cannot recreate overlap
         items = [(float(el.getOffsetInHierarchy(score)), el) for el in p.recurse().notes]
         for prev_el, next_el, prev_off, next_off in find_overlaps(items):
             space = next_off - prev_off
@@ -280,7 +280,7 @@ def fix(in_path, out_path):
 
     span_hits = span_check(parts_of(score))
 
-    # 修后自检：同一判据重扫，不收敛必须可见
+    # Post-fix self-check: rescan with the same criterion; non-convergence must be visible
     left = []
     for p in (score.parts if score.parts else [score]):
         items = [(float(el.getOffsetInHierarchy(score)), el) for el in p.recurse().notes]
@@ -321,7 +321,7 @@ if __name__ == '__main__':
         i = sys.argv.index('--json')
         json_path = sys.argv[i + 1] if len(sys.argv) > i + 1 else None
         del sys.argv[i:i + 2]
-    # 缺文件统一 rc=2 干净报错（inspect/fix 两路同规，2026-10-13）
+    # Missing file: uniform clean rc=2 error (same rule on inspect/fix paths, 2026-10-13)
     if not os.path.exists(sys.argv[2]):
         sys.stderr.write(f'读谱失败：{sys.argv[2]} 不存在（参数为 MusicXML/MIDI 文件路径）\n')
         sys.exit(2)

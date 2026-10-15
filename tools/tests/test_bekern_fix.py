@@ -19,7 +19,7 @@ fails = []
 
 
 def main():
-    # ① 头尾与两列直通
+    # 1. head, tail, and two-column passthrough
     out = normalize('**kern\n4c\t4e\n*-\t*-').split('\n')
     if out[0] != '**kern\t**kern':
         fails.append('缺头部表头')
@@ -28,7 +28,7 @@ def main():
     if '4c\t4e' not in out:
         fails.append('两列直通异常')
 
-    # ② *^ 分裂：第 2 槽裂成两列后，同槽多列时取长记号归并回槽
+    # 2. *^ split: after slot 2 splits into two columns, take the longer token and merge back
     raw = '**kern\n.\t*^\n4c\t4d\t4e\n*-\t*-'
     out = normalize(raw).split('\n')
     if '*\t*' not in out:
@@ -36,19 +36,19 @@ def main():
     if '4c\t4d' not in out:
         fails.append('分裂后取槽异常')
 
-    # ③ *v 合并：裂开的两列并回一槽
+    # 3. *v merge: two split columns rejoin one slot
     raw = '**kern\n.\t*^\n4c\t4d\t4e\n.\t*v\t*v\n4f\t4g\n*-\t*-'
     out = normalize(raw).split('\n')
     if '4f\t4g' not in out:
         fails.append('合并后取槽异常')
 
-    # ④ 取长记号
+    # 4. longer-token pick
     if pick(['', '.', '4a', '16bb']) != '16bb':
         fails.append('pick 未取最长记号')
     if pick(['', '.']) != '.':
         fails.append('pick 全空未回退「.」')
 
-    # ⑤ 槽位不足补「.」顶齐
+    # 5. pad short slots with "." to align
     out = normalize('**kern\n4c\n*-\t*-').split('\n')
     if '4c\t.' not in out:
         fails.append('单列输入未补「.」顶齐')

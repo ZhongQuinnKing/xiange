@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-# 古琴自训·减字树 → 结构化类名 转换器 v3（2026-10-10）
-# 用法：先设环境变量，再 python 树转换器_v3.py
-#   GUQINMM_BASE 数据集根（jzp）；AUTODAPU_CSV 数据表路径（缺省即报错，无个人路径兜底）
-# 输出：CSV（image, classname, code, split）＋统计
-# 标签格式（古琴减字记谱规则）：{前缀_}{左字+徽分}{后缀}_{右字+弦} / {前缀_}散音_{右字+弦} / {前缀_}{右字+弦}
-# 许可：MIT（随仓 LICENSE.md）
+# Guqin self-train: jianzi tree -> structured class names, converter v3 (2026-10-10)
+# Usage: set env vars first, then: python <this script>
+#   GUQINMM_BASE dataset root (jzp); AUTODAPU_CSV table path (missing = error, no personal-path fallback)
+# Output: CSV (image, classname, code, split) + stats
+# Label format (guqin jianzi notation rules): {prefix_}{left+hui}{suffix}_{right+string} / {prefix_}open_{right+string} / {prefix_}{right+string}
+# License: MIT (see LICENSE.md in the repo)
 
 import ast
 import collections
@@ -65,7 +65,7 @@ def find_finger_pair(tree, box):
         op, cs = node
         for i, c in enumerate(cs):
             if isinstance(c, str) and c in box:
-                # 找兄弟里的数字来源（优先紧邻的）
+                # find the digit source among siblings (nearest first)
                 for j in list(range(i+1, len(cs))) + list(range(i-1, -1, -1)):
                     if j == i:
                         continue
@@ -122,7 +122,7 @@ def to_classname(lf, ln, rf, rn, prefix, suffix, fan, san, n_right_extra, seq):
 def extract(tree):
     lf, ln = find_finger_pair(tree, LEFT_MAP)
     rf, rn = find_finger_pair(tree, RIGHT_MAP)
-    # 第二右手（复组检测）
+    # second right-hand (multi-group detection)
     def count_right(node):
         if isinstance(node, str):
             return 1 if node in RIGHT_MAP else 0

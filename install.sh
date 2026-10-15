@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# 弦歌 · 一键装依赖（按档）
-# 用法：bash install.sh [core|render|browser|vision|dev|all]   默认 core
+# Xiange -- one-click dependency install (by tier)
+# Usage: bash install.sh [core|render|browser|vision|dev|all]   default: core
 set -euo pipefail
 cd "$(dirname "$0")"
 

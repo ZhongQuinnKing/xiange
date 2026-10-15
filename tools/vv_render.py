@@ -18,7 +18,7 @@
   MusicXML 无 new-system 标记行为同 auto；默认路径（不加此参数）与旧版完全一致。
 """
 import sys, os, glob, time, re
-# 渲染依赖延迟容错：缺依赖时模块仍可导入，main 里干净报错 rc=3（不裸崩）
+# Late-tolerant render deps: module imports without them; main fails cleanly with rc=3 (no bare crash)
 try:
     import verovio, cairosvg
     _DEPS_ERR = None

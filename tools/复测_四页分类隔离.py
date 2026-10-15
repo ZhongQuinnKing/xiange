@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# 分类层隔离复测（2026-10-10）
-# 用法：先设环境变量，再 python 复测_四页分类隔离.py
-#   JIALU_SELF 古琴自训工作根；JIALU_GEN 古琴引擎输出根（缺省即报错，无个人路径兜底）
-# 依赖：opencv、torch、torchvision
-# 许可：MIT（随仓 LICENSE.md）
+# Classification-layer isolation re-test (2026-10-10)
+# Usage: set env vars first, then: python <this script>
+#   JIALU_SELF guqin self-train work root; JIALU_GEN guqin engine output root (missing = error, no personal-path fallback)
+# Deps: opencv, torch, torchvision
+# License: MIT (see LICENSE.md in the repo)
 import csv
 import json
 import os
@@ -28,7 +28,7 @@ import torchvision.transforms as transforms  # noqa: E402
 from image_manipulation import shrink, paste_to_square  # noqa: E402
 from model import CnnModel  # noqa: E402
 
-# 页目清单经命令行传入（--pages a b c），不带个人数据实名单
+# Page lists come via CLI (--pages a b c); no personal data lists bundled
 PAGES = []
 
 
@@ -115,7 +115,7 @@ def main():
 if __name__ == '__main__':
     main()
 
-# 判读口径注（2026-10-10 干跑后立）：
-# "倍数"（中位/均匀基线）跨模型不可直比——类数不同基线不同（203 类 0.00493 vs 483 类 0.00207），
-# 且未训练网络的分布数学效应会虚高倍数（dryrun 干跑实录：四页 17.6-31.2x 但模型未学会）。
-# 判读主指标＝答案正确性（人工读图核）；辅＝置信度绝对值分布；倍数仅同模型前后对比用。
+# Reading-standard note (set after the 2026-10-10 dry run):
+# the "multiple" (median vs uniform baseline) is not comparable across models -- different class counts give different baselines (203 classes 0.00493 vs 483 classes 0.00207),
+# and the math of untrained distributions inflates it (dry-run records: 17.6-31.2x on four pages while the model had learned nothing).
+# Main metric = answer correctness (human-verified); secondary = confidence-value distribution; multiples only for before/after on the same model.

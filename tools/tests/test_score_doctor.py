@@ -92,15 +92,15 @@ def main():
         p1 = write_tmp(tmp, 'no_overlap.musicxml', x_no_overlap())
         p2 = write_tmp(tmp, 'true_overlap.musicxml', x_true_overlap())
 
-        # 1 跨小节相接不误报
+        # 1. cross-measure joining must not false-positive
         n1 = count_overlaps(p1)
         check('跨小节相接 0 误报', n1 == 0, f'报出 {n1} 处（期望 0）')
 
-        # 2 真重叠被捉
+        # 2. real overlap caught
         n2 = count_overlaps(p2)
         check('小节内真重叠被捉', n2 == 1, f'报出 {n2} 处（期望 1）')
 
-        # 3 fix 真重叠件：备份 + 明细 + 截短收敛
+        # 3. fix real overlap: backup + details + trimming converges
         out = os.path.join(tmp, 'fixed.musicxml')
         with redirect_stdout(io.StringIO()):
             score_doctor.fix(p2, out)
@@ -112,7 +112,7 @@ def main():
         check('fix 真重叠：备份+明细+收敛', ok_bak and ok_log and ok_conv,
               f'备份={ok_bak} 明细={ok_log} 收敛={ok_conv}')
 
-        # 4 fix 无重叠件：0 截短（不许出 [去重叠] 明细；旧版跨小节误截）
+        # 4. fix clean file: zero trims (no de-overlap details; the old version mis-trimmed across measures)
         out2 = os.path.join(tmp, 'fixed2.musicxml')
         with redirect_stdout(io.StringIO()):
             score_doctor.fix(p1, out2)
@@ -121,7 +121,7 @@ def main():
         check('fix 无重叠件 0 截短', no_trim,
               '明细文件=' + ('无' if not os.path.exists(log2) else '有且无去重叠条目'))
 
-        # 5-7 CLI 契约：缺参／缺文件每路 rc=2 干净报错（2026-10-13 统一）
+        # 5-7. CLI contract: missing args/file fail clean rc=2 per path (unified 2026-10-13)
         import subprocess
         script = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'score_doctor.py')
         nope = os.path.join(tmp, 'nope.musicxml')

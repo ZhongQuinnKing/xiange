@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# 谱种路由 v1（2026-10-10，体系汇合件）——一张图进来判谱种，路由到对应引擎。
-# 判据（规则启发，全过程可解释）：
-#   ① 水平谱线检测（形态学横线+分组）：五线组→五线谱；六线组→六线谱
-#   ② 无谱线时看字符块：小而多且窄→简谱数字；中大方形块→方块字谱（减字谱/工尺，进一步靠斜杠密度粗分）
-#   ③ 都不像→unknown（如实拒判，不硬猜）
-# 用法: python3 工具_谱种路由.py <图> [--json 输出.json]
+# Score-type router v1 (2026-10-10, system-convergence piece) -- one image in, detect the notation type, route to the matching engine.
+# Criteria (rule heuristics, fully explainable):
+#   1. horizontal staff-line detection (morphology + grouping): 5-line groups -> staff notation; 6-line groups -> tab
+#   2. no staff lines: inspect character blocks: small, many, narrow -> numbered notation; medium square blocks -> block-character notation (guqin/tab, split coarsely by slash density)
+#   3. neither -> unknown (honest refusal, no guessing)
+# Usage: python3 <this script> <image> [--json out.json]
 import argparse
 import json
 import os
 
-# 视觉依赖延迟容错：缺依赖时模块仍可导入，main 里干净报错 rc=3（不裸崩）
+# Late-tolerant visual deps: module imports without them; main fails cleanly with rc=3 (no bare crash)
 try:
     import cv2
     import numpy as np
@@ -86,7 +86,7 @@ def route(path):
     h, w = gray.shape
     lines = detect_hlines(gray)
     run, gap = longest_equidistant_run(lines)
-    # 谱表线数归判：恰 6 线→六线谱；5 的倍数→五线谱（多谱表连排）；5→五线；其余按五线存疑
+    # Line-count verdict: exactly 6 -> tab; multiple of 5 -> staff (several staves stacked); 5 -> staff; otherwise staff with doubt
     gap6 = gap
     if run == 6:
         g5, g6, gap5 = 0, 1, gap
@@ -118,7 +118,7 @@ def route(path):
     elif lines and max(l[3] for l in lines) > w * 0.8 and n_blocks < 40:
         result.update(spec='方格稿/其他表格', engine='待人工', why='长横线多、字块少')
     else:
-        # 无谱线：先按墨量粗分（影印密排 vs 疏排印刷）
+        # No staff lines: coarse split by ink density (dense scan copy vs sparse print)
         _bw = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 25, 10)
         ink = float((_bw > 0).mean())
         result['ink'] = round(ink, 4)
@@ -126,7 +126,7 @@ def route(path):
             result.update(spec='影印密排谱（工尺/古籍类）', engine='SuziOMR（工尺）/ 需目核',
                           why=f'无谱线、墨量比高（{ink:.3f}，影印/密排特征）')
         elif n_blocks >= 60 and 0 < med_w <= w * 0.05 and med_h <= h * 0.06:
-            # 小而多的块：简谱数字（数字通常窄矮）；方块字谱块更大
+            # many small blocks: numbered notation (digits are narrow); block-character notation has larger blocks
             result.update(spec='简谱', engine='OrpheusNet', why=f'无谱线、小字块多（{n_blocks}，中位 {med_w:.0f}x{med_h:.0f}）')
         elif n_blocks >= 20 and med_w > w * 0.03:
             result.update(spec='方块字谱（减字谱/工尺谱）', engine='auto-dapu（古琴）/ SuziOMR（工尺）',

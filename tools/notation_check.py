@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""notation_check — 记谱规范检器（护城河第⑤层：记谱层。2026-10-10 立）
+"""notation_check — 记谱规范检器（记谱层。2026-10-10 立）
 
 乐理关查"音乐对不对"（theory_check），原谱关查"还是不是这首曲子"，
 记谱关查"谱面写没写对"——三件不同的事。本关的立项起因：全曲八分无连符杠
@@ -185,7 +185,7 @@ def _xml_chains(seq):
 
 
 def check_part(part, part_index, staves_declared, part_name):
-    # 声乐谱识别：XML 层查 <lyric> 标签（按字分杠属合法）——N1a 对声乐谱不适用（2026-10-10 修）
+    # Vocal-score detection: look for <lyric> tags in the XML (per-syllable breaking is legal) -- N1a does not apply to vocal scores (fixed 2026-10-10)
     try:
         has_lyrics = any('lyric' in (el.tag if isinstance(el.tag, str) else '')
                          for el in part.iter())
@@ -195,13 +195,13 @@ def check_part(part, part_index, staves_declared, part_name):
         expected = _expected_groups(seq, div, unit_q)
         exp_keys = {tuple(round(e['onset'], 4) for e in g) for g in expected}
 
-        # ── N1a 符杠缺失（严重）──────────────────────────────
-        # 判据：期望组内各音的 onset 须落在同一条符杠链里（组内被连住即可；
-        # 连成了跨拍长链属分组问题，归 N1b 轻项，不重复报严重）
+        # -- N1a missing beams (severe) ------------------------------
+        # Criterion: expected-group onsets must lie on one beam chain (linked within the group is enough;
+        # a long cross-beat chain is a grouping issue, handled under N1b minor, not double-reported)
         chains, orphans = _xml_chains(seq)
-        # 修复（2026-10-10，二级流行歌件实录误报）：原链索引键＝(onset) 跨声部互踩——
-        # RH 与 LH 在同一 onset 各起一条链时，后入者覆盖先入者，另一声部的期望组必然
-        # "找不到自己的链"而报假阳性 N1a（双 staff 件、LH 含八分链时必炸）。键改 (voice, staff, onset)。
+        # Fixed (2026-10-10, false positives seen on a level-2 pop-song job): the chain index was keyed by (onset) only, so voices clobbered each other --
+        # when RH and LH each started a chain at the same onset, the later overwrote the earlier, and the other voice's expected group inevitably
+        # reported a false N1a for "no chain found" (always fired on two-staff jobs where LH had eighth-note chains). Key now (voice, staff, onset).
         def _ev_key(e):
             return (e['voice'], e['staff'], round(e['onset'], 4))
         onset_chain = {}
@@ -219,7 +219,7 @@ def check_part(part, part_index, staves_declared, part_name):
                 add('严重', 'N1a', mno,
                     f"第{beat}拍 {len(g)} 音（{g[0]['type']}）未连符杠，on 拍位 {ons}")
 
-        # ── N1b 符杠分组不符（轻）────────────────────────────
+        # -- N1b wrong beam grouping (minor) --------------------------
         for c in chains:
             key = tuple(round(e['onset'], 4) for e in c)
             if key not in exp_keys:
@@ -229,7 +229,7 @@ def check_part(part, part_index, staves_declared, part_name):
             add('轻', 'N1b', mno,
                 f"符杠链残缺/孤立（on {c[0]['onset'] / div:.2f} 起，{len(c)} 音）")
 
-        # ── N2a 符干不齐（严重）／标注不齐（轻）──────────────
+        # -- N2a uneven stems (severe) / uneven marks (minor) ---------
         for c in chains:
             stems = [e['stem'] for e in c]
             present = [s for s in stems if s in ('up', 'down')]
@@ -240,7 +240,7 @@ def check_part(part, part_index, staves_declared, part_name):
                 add('轻', 'N2a', mno,
                     f"符杠链内符干标注不齐（{len(present)}/{len(stems)} 有标注）")
 
-        # ── N3 休止符布局（轻）────────────────────────────────
+        # -- N3 rest layout (minor) -----------------------------------
         beats, beat_type = ts['beats'], ts['beat_type']
         bar_ql = beats * 4.0 / beat_type
         if beat_type == 4:
@@ -261,7 +261,7 @@ def check_part(part, part_index, staves_declared, part_name):
                     if abs(e['onset']) > 1e-6 or abs(ql - bar_ql) > 1e-6:
                         add('轻', 'N3b', mno,
                             f"全休止符起于 {e['onset'] / div:.2f} 拍、总长 {ql}（应起于小节首、满整小节）")
-        # N3c 拍内休止未合并：某一拍恰由 ≥2 个休止符连排填满（应合并书写）
+        # N3c unmerged in-beat rests: a beat filled by >=2 consecutive rests (should be merged)
         if beat_type == 4:
             units = int(round(bar_ql / unit_q))
             rests = [e for kind, e in seq if kind == 'note' and e['rest']]
@@ -366,7 +366,7 @@ def build_report(source, label=None):
         name = label or os.path.basename(source)
     parts = [c for c in root if _t(c) == 'part']
     for pi, part in enumerate(parts):
-        # part 名（part-list → score-part id → part-name）
+        # part name (part-list -> score-part id -> part-name)
         pname = None
         pl = _find(root, 'part-list')
         if pl is not None:

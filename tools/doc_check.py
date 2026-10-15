@@ -76,7 +76,7 @@ def check_refs(issues):
     return checked
 
 
-# 模式词面以 \u 转义拼装（re 支持）：扫描器自身不得把词面带进仓
+# Patterns are assembled with \u escapes (re supports them): this scanner must not carry the word list into the repo
 VOCAB_BLACKLIST = [
     (r'指令[_\-－]\s*\d+', '内部指令编号'),
     (r'\u97f3\u4e50\u6280\u80fd\u5305\u002d\u5185\u90e8', '内部目录名'),

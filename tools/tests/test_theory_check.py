@@ -78,48 +78,48 @@ def run_case_params(name, cases, must, must_not, e1_exempt=None, e1_ranges=None)
 def main():
     all_ok = True
 
-    # 1 干净例：C 大三和弦上下分布，无并行五八度无交叉
+    # 1. clean case: C major chord split across hands, no parallels, no crossing
     clean = {
         1: [('RH', [67, 72], 4.0), ('LH', [48, 55, 60], 4.0)],
         2: [('RH', [65, 69], 4.0), ('LH', [45, 53, 57], 4.0)],
     }
     all_ok &= run_case('干净例无严重项', clean, must=[], must_not=['E1', 'E3', 'E4'])
 
-    # 2 平行五度：RH 62→64，LH 55→57（同向，间隔恒为 7）
+    # 2. parallel fifths: RH 62->64, LH 55->57 (same direction, constant interval 7)
     p5 = {
         1: [('RH', [62], 2.0), ('LH', [55], 2.0)],
         2: [('RH', [64], 2.0), ('LH', [57], 2.0)],
     }
     all_ok &= run_case('平行五度被捉', p5, must=['E3'], must_not=['E4'])
 
-    # 3 声部交叉：RH 掉到 50，LH 在 60
+    # 3. voice crossing: RH drops to 50 while LH sits at 60
     cross = {
         1: [('RH', [50], 4.0), ('LH', [60], 4.0)],
     }
     all_ok &= run_case('声部交叉被捉', cross, must=['E1'], must_not=['E3', 'E4'])
 
-    # 4 跨度过大：RH 同拍 60 与 78（18 半音，默认上限 20 内不报），60 与 82（22 半音）报
-    # [本地适配 2026-10-11] 默认跨度上限 16 改 20 后本例同步按 20 标定（测试腐化修复）
+    # 4. oversized span: RH same-beat 60 and 78 (18 semitones, within default 20, not reported), 60 and 82 (22) reported
+    # [local adaptation 2026-10-11] default span ceiling 16 -> 20; this case re-calibrated to 20 (test-rot fix)
     span = {
         1: [('RH', [60, 78], 2.0), ('LH', [40], 4.0)],
         2: [('RH', [60, 82], 2.0), ('LH', [40], 4.0)],
     }
     all_ok &= run_case('跨度过大被捉（大十度不误报）', span, must=['E4'], must_not=['E1'])
 
-    # 5 声部密度骤降：LH 持续二分和弦 [48,55,59] 后骤降为单音 57 → E5 必须报
+    # 5. density drop: LH sustained half-note chord [48,55,59] then drops to single 57 -> E5 must fire
     dens = {
         1: [('LH', [48, 55, 59], 2.0), ('LH', [57], 2.0), ('RH', [67], 4.0)],
     }
     all_ok &= run_case('声部密度骤降被捉', dens, must=['E5'], must_not=['E1', 'E3', 'E4'])
 
-    # 6 密度规则不误报：①持续和弦后只少一音（4→3）不报；②短和弦（1 拍）后接单音不报
+    # 6. density rule no false positives: (1) losing only one note after a sustained chord (4->3) not reported; (2) single note after a short 1-beat chord not reported
     dens_ok = {
         1: [('LH', [48, 52, 55, 59], 2.0), ('LH', [48, 52, 57], 2.0)],
         2: [('LH', [48, 55, 59], 1.0), ('LH', [57], 3.0)],
     }
     all_ok &= run_case('密度规则不误报（少一音／短和弦）', dens_ok, must=[], must_not=['E5'])
 
-    # 7-10 E1 豁免参数（供设计性交叉放行；基线报警见病例 3）
+    # 7-10. E1 exemption parameters (for designed crossings; baseline alarm see case 3)
     all_ok &= run_case_params('E1 豁免（声部参数）放行', cross, must=[], must_not=['E1'],
                               e1_exempt=['RH'])
     all_ok &= run_case_params('E1 豁免（小节参数）放行', cross, must=[], must_not=['E1'],
@@ -135,7 +135,7 @@ def main():
     all_ok &= run_case_params('小节参数罩全段（净）', cross2, must=[], must_not=['E1'],
                               e1_ranges=[(1, 2)])
 
-    # CLI 契约：缺文件须干净 fail-closed（rc=2、无 Traceback）
+    # CLI contract: missing file must fail closed cleanly (rc=2, no traceback)
     import subprocess
     r = subprocess.run(
         [sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -145,7 +145,7 @@ def main():
         all_ok = False
         print(f'✗ 缺文件未干净 fail-closed（rc={r.returncode}）')
 
-    # CLI 契约：--e1-range 格式错须干净 fail-closed（rc=2、无 Traceback）
+    # CLI contract: bad --e1-range format must fail closed cleanly (rc=2, no traceback)
     r2 = subprocess.run(
         [sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                       '..', 'theory_check.py'),

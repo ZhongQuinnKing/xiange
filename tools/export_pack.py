@@ -37,8 +37,8 @@ REPO = os.path.dirname(HERE)
 FONT_DIR = os.path.join(REPO, 'assets', 'fonts')
 CJK_FAMILY = 'Noto Sans SC'
 MUSESCORE = '/Applications/MuseScore 4.app/Contents/MacOS/mscore'
-# 内嵌字体白名单（子集前缀 6 字母＋加号在比对前剥掉）
-# Leipzig／Gootville／Petaluma 等为 verovio 随包自带字体，官方 README 载明全为 OFL 1.1
+# Embedded-font whitelist (6-letter subset prefix + plus stripped before compare)
+# Leipzig / Gootville / Petaluma etc. ship with verovio; its README states all are OFL 1.1
 OFL_ALLOW = ('NotoSans', 'NotoSerif', 'Bravura', 'BravuraText', 'MuseJazz', 'Leland',
              'Leipzig', 'Gootville', 'Petaluma')
 
@@ -160,7 +160,7 @@ def _first_bpm(score):
 def export_jianpu(src, outdir, title, fh):
     """简谱腿（deliver_dolce 子进程）。返回 (state, files)；state: ok / na（多声部豁免）/ fail。"""
     import tempfile
-    # 前置门：多声部不送（Dolce 面可能显示原始源而非简谱，静默错件风险）
+    # Pre-gate: multi-voice files are not sent (Dolce may show the raw source instead of the numbered score: silent-wrong-file risk)
     try:
         from music21 import converter
         n_parts = len(list(converter.parse(src).parts))
@@ -195,7 +195,7 @@ def export_jianpu(src, outdir, title, fh):
                 os.replace(p, os.path.join(outdir, newname))
             files.append(os.path.join(outdir, newname))
     t123 = os.path.join(outdir, f'{title}.123.txt')
-    # 内容验证：.123.txt 应为首行 123 源文本；若拿回原始 MusicXML＝未转换，判失败（防静默错件）
+    # Content check: .123.txt must start with 123 source text; getting back raw MusicXML means no conversion -> fail (guards against silent wrong files)
     if os.path.exists(t123):
         head = open(t123, encoding='utf-8', errors='ignore').read(300)
         if '<?xml' in head or '<score-partwise' in head:
@@ -331,7 +331,7 @@ def main():
     check_lines = []
     jp_files = []
     try:
-        # 源规范化（非 xml 先转）
+        # Source normalization (convert non-xml first)
         src = args.src
         if not src.lower().endswith(('.xml', '.musicxml')):
             from music21 import converter
@@ -339,7 +339,7 @@ def main():
             converter.parse(src).write('musicxml', fp=norm)
             src = norm
 
-        # 出包前检器
+        # Pre-pack checkers
         rc, out = run_checker('notation_check.py', [src], fh)
         m = re.search(r'严重 (\d+) 处', out)
         n_sev = int(m.group(1)) if m else -1
@@ -384,7 +384,7 @@ def main():
         try:
             font_bad = font_gate(all_pdfs, args.audience, fh)
         except RuntimeError as e:
-            # 字体未清白名单：公开包一律拒出（fail-closed，不因 --tolerant 放行）
+            # Unlisted fonts: public packs are always refused (fail-closed; --tolerant does not bypass)
             if args.audience == 'public' or not args.tolerant:
                 raise
             font_bad = [str(e)[:120]]
@@ -399,7 +399,7 @@ def main():
         write_card(workdir, title, status, args.audience, args.note,
                    check_lines, missing, na_list, font_bad, fh)
 
-        # 组装＋原子替换＋zip
+        # Assemble + atomic replace + zip
         if os.path.exists(packdir):
             shutil.rmtree(packdir)
         os.rename(workdir, packdir)

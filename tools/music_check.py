@@ -13,7 +13,7 @@
 """
 import re, sys, glob, os, datetime
 
-# 知识库＝本脚本上级目录的 知识/（本机与发布版结构一致；MUSIC_CHECK_KB 可覆盖）
+# Knowledge base = the knowledge dir next to this script (same layout locally and in the release; MUSIC_CHECK_KB overrides)
 KB = os.environ.get('MUSIC_CHECK_KB', '')
 if not KB:
     KB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '知识')
@@ -23,7 +23,7 @@ if not os.path.isdir(KB):
     sys.exit(2)
 OUT = os.environ.get('MUSIC_CHECK_OUT', '')
 
-# 允许的"专名类"字符范围（今天质检验证过的合法用法）
+# Allowed "proper-noun" character range (usage verified by QC today)
 def char_ok(ch):
     cp = ord(ch)
     if 0x4E00 <= cp <= 0x9FFF: return True   # CJK
@@ -46,7 +46,7 @@ DOMAIN_FILES = {
     '复调域': '40-复调.md', '配器域': '50-配器.md', '编配域': '60-编配与即兴.md',
     '风格域': '70-风格体系.md', '教育域': '87-音乐教育.md',
 }
-# 回归锚点：问答实例依赖的关键句（grep 得到即通过）
+# Regression anchors: key sentences the QA examples depend on (pass when grep finds them)
 ANCHORS = [
     ('60-编配与即兴.md', '三层次'),
     ('70-风格体系.md', '五声性'),
