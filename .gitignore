@@ -5,3 +5,4 @@ __pycache__/
 *.plist
 screenlog.*
 .ruff_cache/
+xiange-mcp/
