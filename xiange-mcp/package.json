@@ -4,6 +4,7 @@
   "private": false,
   "description": "Local MCP server exposing eight music tools: score-type routing, OMR, audio/video transcription, audio extraction, theory checks, notation checks, format conversion/transposition, and rendering.",
   "license": "MIT",
+  "mcpName": "io.github.ZhongQuinnKing/xiange-mcp",
   "keywords": [
     "mcp",
     "music",
