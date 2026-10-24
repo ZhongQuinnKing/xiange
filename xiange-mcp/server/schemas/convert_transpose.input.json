@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://e1.local/schemas/convert_transpose.input.json",
+  "title": "convert_transpose input",
+  "type": "object",
+  "required": ["score_path"],
+  "additionalProperties": false,
+  "properties": {
+    "score_path": {
+      "type": "string",
+      "description": "MusicXML / MIDI / MXL / KRN 绝对路径。"
+    },
+    "output_format": {
+      "type": "string",
+      "enum": ["musicxml", "midi", "mxl"],
+      "default": "musicxml",
+      "description": "目标格式。"
+    },
+    "semitones": {
+      "type": "integer",
+      "minimum": -24,
+      "maximum": 24,
+      "default": 0,
+      "description": "移调半音数；正数向上，负数向下。"
+    },
+    "output_dir": {
+      "type": "string",
+      "description": "产物目录；缺省为 <install-dir>/samples/convert_transpose。"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://e1.local/schemas/extract_audio.input.json",
+  "title": "extract_audio input",
+  "type": "object",
+  "required": ["path"],
+  "additionalProperties": false,
+  "properties": {
+    "path": {
+      "type": "string",
+      "description": "音频或视频绝对路径（WAV/MP3/FLAC/OGG/M4A/AIFF 或 MP4/MOV/MKV/AVI/WEBM/M4V）。"
+    },
+    "sample_rate": {
+      "type": "integer",
+      "minimum": 8000,
+      "maximum": 48000,
+      "default": 16000,
+      "description": "输出 WAV 采样率（Hz）。"
+    },
+    "mono": {
+      "type": "boolean",
+      "default": true,
+      "description": "是否混为单声道；false 时尽量保留立体声。"
+    },
+    "output_dir": {
+      "type": "string",
+      "description": "产物目录；缺省为 <install-dir>/samples/extract_audio。"
+    }
+  }
+}

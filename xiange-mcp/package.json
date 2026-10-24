@@ -1,0 +1,29 @@
+{
+  "name": "xiange-mcp",
+  "version": "0.2.0",
+  "private": false,
+  "description": "Local MCP server exposing eight music tools: score-type routing, OMR, audio/video transcription, audio extraction, theory checks, notation checks, format conversion/transposition, and rendering.",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "music",
+    "musicxml",
+    "omr",
+    "transcription",
+    "lilypond"
+  ],
+  "bin": {
+    "xiange-mcp": "server/server.py"
+  },
+  "files": [
+    "server/",
+    "docs/",
+    "README.md",
+    "README.en.md",
+    "LICENSE",
+    "LICENSE-DOCS"
+  ],
+  "scripts": {
+    "test": "python tests/test_all.py"
+  }
+}

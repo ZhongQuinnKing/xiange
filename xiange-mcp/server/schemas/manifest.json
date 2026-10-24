@@ -1,0 +1,69 @@
+{
+  "server": {
+    "name": "xiange-mcp",
+    "version": "0.2.0",
+    "transport": "stdio",
+    "protocol": "JSON-RPC 2.0 / MCP",
+    "stage": "published"
+  },
+  "output_schema": "common.output.json",
+  "docs": "../../docs/schema.md",
+  "tools": [
+    {
+      "name": "recognize_score",
+      "title": "识谱（谱种识别与路由）",
+      "description": "识别谱面图片的谱种并给出后续引擎路由，不产出 MusicXML。",
+      "input_schema": "recognize_score.input.json",
+      "output_schema": "common.output.json"
+    },
+    {
+      "name": "omr_score",
+      "title": "音符级 OMR（Audiveris）",
+      "description": "用 Audiveris 对印刷体五线谱做音符级识别，产出 MusicXML。",
+      "input_schema": "omr_score.input.json",
+      "output_schema": "common.output.json"
+    },
+    {
+      "name": "transcribe_audio",
+      "title": "音频/视频转谱",
+      "description": "音频或视频转 MIDI，再量化生成 MusicXML，并附带乐理与记谱校验。",
+      "input_schema": "transcribe_audio.input.json",
+      "output_schema": "common.output.json"
+    },
+    {
+      "name": "extract_audio",
+      "title": "音轨提取（PyAV）",
+      "description": "从音视频容器中提取音轨，写出 16-bit PCM WAV。",
+      "input_schema": "extract_audio.input.json",
+      "output_schema": "common.output.json"
+    },
+    {
+      "name": "check_theory",
+      "title": "乐理校验",
+      "description": "检查声部交叉、平行五八度、跨度、密度、小节时值等乐理问题。",
+      "input_schema": "check_theory.input.json",
+      "output_schema": "common.output.json"
+    },
+    {
+      "name": "check_notation",
+      "title": "记谱规范校验",
+      "description": "检查符杠、符干、休止符、谱表归属等记谱规范问题。",
+      "input_schema": "check_notation.input.json",
+      "output_schema": "common.output.json"
+    },
+    {
+      "name": "convert_transpose",
+      "title": "格式互转与移调",
+      "description": "在 MusicXML、MIDI、MXL 之间互转，并按半音移调。",
+      "input_schema": "convert_transpose.input.json",
+      "output_schema": "common.output.json"
+    },
+    {
+      "name": "render_score",
+      "title": "渲染出图与 PDF",
+      "description": "将 MusicXML 渲染为 LilyPond，输出 PDF 与 PNG。",
+      "input_schema": "render_score.input.json",
+      "output_schema": "common.output.json"
+    }
+  ]
+}

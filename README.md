@@ -3,8 +3,8 @@
 乐正线·一级
 
 > 原作者：ZhongQuinnKing（主号署名）
-> 许可：见 [LICENSE.md](LICENSE.md)（分层：代码 MIT，内容与文档 CC BY-NC-ND 4.0；五档：免费用／自改自由／转发署名／改版发布先授权／商用零豁免——本许可本身不授予商用权）
-> 商用授权与合作：需商用请先联系 hello@xinchuan.dev 取得书面授权（标题注明【商用授权】或【改编授权】）；也可走本仓库 issue
+> 许可：见 [LICENSE.md](LICENSE.md)（分层：代码 MIT，内容与文档 CC BY-NC-ND 4.0；五档：免费用／自改自由／转发署名／改版发布先授权／商用零豁免）
+> 商用与合作：请先联系 hello@xinchuan.dev（标题注明【商用授权】或【改编授权】）；也可走本仓库 issue
 
 给主流 AI 用的音乐能力包。姊妹篇：采诗读互联网、拾级陪人、玉尺量文章、弦歌弄音乐。
 
@@ -131,6 +131,7 @@
   - 自测：tools/tests/ 二十一套（原六套：test_omr_eval 五场景、test_theory_check 十一病例、test_score_doctor 重叠判据与 fix 安全网、test_triage、test_same_name_parts 同名声部防塌陷、test_notation 记谱两件最小闭环与幂等；新增十二套：test_integration 六小节端到端过三检器、test_bekern_fix 归一化、test_remeasure 分桶与滤除、test_verify 度量与冒烟、test_deliver_dolce 依赖守卫与 CLI 契约、test_export_pack 出包契约与坏源 fail-closed、test_yuchi_score_check 谱面规范查对五场景与误报边界、test_engine_runner 引擎壳契约与双适配器冒烟、test_xiange 统一壳契约、test_consensus 共识三模式判读与缺文件契约、test_vv_render 渲染腿契约与 CJK 修复、test_spec_route 谱种路由契约与合成图判读；续增三套：test_verify_vs_audio 音高类一致度函数件与 CLI 契约、test_music_check 知识库质检 rc 口径与环境口、test_bili_extract 谱视频提页缺件降级与合成跑通），随时可复跑验证判据；另有过闸轻量静态查（ruff E9,F）
 - examples/bench/  公开基准样例包（十一首合成谱例＋清单＋定版预期；跑批 `python3 tools/bench_run.py`）。样例全部自造，验「流程可复现」，不承诺准确率数字
 - SKILL.md  技能入口（给 AI 装包的总说明；两条能力线分流）
+- xiange-mcp/  MCP 服务发布面（v0.2.0：识谱／光学识谱／音频转谱／音轨分离／乐理校验／记谱规范／格式互转移调／渲染出图，npm 包 xiange-mcp）
 - CHANGELOG.md  更新日志（版本制度与版本史）
 - CONTRIBUTING.md  贡献指南（含版权审查节）
 - ROADMAP.md  路线图（六域排期与里程碑）

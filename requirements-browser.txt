@@ -1,3 +1,0 @@
-# 弦歌 · 浏览器档（简谱腿 deliver_dolce）
-# 装完补一步：python -m playwright install chromium
-playwright>=1.40

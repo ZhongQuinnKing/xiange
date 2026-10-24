@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://e1.local/schemas/transcribe_audio.input.json",
+  "title": "transcribe_audio input",
+  "type": "object",
+  "required": ["media_path"],
+  "additionalProperties": false,
+  "properties": {
+    "media_path": {
+      "type": "string",
+      "description": "音频文件绝对路径（WAV/MP3/FLAC/OGG/M4A/AIFF），或视频文件（MP4/MOV/MKV/AVI/WEBM/M4V）。视频先由 PyAV 提取 16 kHz 单声道音轨再走同一转谱链；无音轨视频以 no_audio_stream 拒绝。"
+    },
+    "output_dir": {
+      "type": "string",
+      "description": "产物目录；缺省为 <install-dir>/samples/transcribe_audio。"
+    },
+    "quantize": {
+      "type": "boolean",
+      "default": true,
+      "description": "是否把 MIDI 量化到 1/8 后写 MusicXML。"
+    },
+    "tempo": {
+      "type": "number",
+      "minimum": 20,
+      "maximum": 400,
+      "default": 120,
+      "description": "写入 MIDI 的速度（BPM）。"
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://e1.local/schemas/render_score.input.json",
+  "title": "render_score input",
+  "type": "object",
+  "required": ["score_path"],
+  "additionalProperties": false,
+  "properties": {
+    "score_path": {
+      "type": "string",
+      "description": "MusicXML / MIDI / MXL / KRN 绝对路径。"
+    },
+    "formats": {
+      "type": "array",
+      "items": {"type": "string", "enum": ["pdf", "png"]},
+      "default": ["pdf", "png"],
+      "description": "输出格式；可只选 pdf 或 png。"
+    },
+    "title": {
+      "type": "string",
+      "description": "可选，覆盖谱面标题；中文标题在 LilyPond 2.13.62 下字形支持未保证。"
+    },
+    "output_dir": {
+      "type": "string",
+      "description": "产物目录；缺省为 <install-dir>/samples/render_score。"
+    }
+  }
+}

@@ -1,3 +1,0 @@
-# 弦歌 · 输入路由档（工具_谱种路由／B站提页 bili_extract）
-opencv-python>=4.8
-numpy>=1.26

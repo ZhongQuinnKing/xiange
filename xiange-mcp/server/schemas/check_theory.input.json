@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://e1.local/schemas/check_theory.input.json",
+  "title": "check_theory input",
+  "type": "object",
+  "required": ["score_path"],
+  "additionalProperties": false,
+  "properties": {
+    "score_path": {
+      "type": "string",
+      "description": "MusicXML / MIDI / MXL / KRN 绝对路径。"
+    },
+    "span_limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 48,
+      "description": "可及跨度上限（半音）；缺省 20（大十三度）。"
+    },
+    "output_dir": {
+      "type": "string",
+      "description": "产物目录；缺省为 <install-dir>/samples/check_theory。"
+    }
+  }
+}

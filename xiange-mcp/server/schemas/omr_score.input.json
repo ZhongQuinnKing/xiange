@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://e1.local/schemas/omr_score.input.json",
+  "title": "omr_score input",
+  "type": "object",
+  "required": ["path"],
+  "additionalProperties": false,
+  "properties": {
+    "path": {
+      "type": "string",
+      "description": "谱面图片绝对路径（PNG/JPG/JPEG/TIFF/BMP/GIF）或 PDF 绝对路径。"
+    },
+    "engine": {
+      "type": "string",
+      "enum": ["audiveris"],
+      "default": "audiveris",
+      "description": "音符级 OMR 引擎；当前仅 Audiveris 5.11.0（私有前缀解包，非系统安装）。"
+    },
+    "output_dir": {
+      "type": "string",
+      "description": "产物目录；缺省为 <install-dir>/samples/omr_score。"
+    }
+  }
+}

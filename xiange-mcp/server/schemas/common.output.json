@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://e1.local/schemas/common.output.json",
+  "title": "E1 tool output (fixed three-piece envelope)",
+  "type": "object",
+  "required": ["result", "validation", "confidence"],
+  "additionalProperties": false,
+  "properties": {
+    "result": {
+      "type": "object",
+      "description": "Tool-specific result payload."
+    },
+    "validation": {
+      "type": "object",
+      "required": ["status", "checks", "engine"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["pass", "warn", "fail", "partial"]
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "status", "detail"],
+            "properties": {
+              "id": {"type": "string"},
+              "status": {"type": "string", "enum": ["pass", "warn", "fail", "skip"]},
+              "detail": {"type": "string"}
+            },
+            "additionalProperties": true
+          }
+        },
+        "engine": {
+          "type": "object",
+          "description": "Engine identity, path, exit code, elapsed time, runtime."
+        }
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "required": ["level", "basis", "uncertain"],
+      "additionalProperties": false,
+      "properties": {
+        "level": {"type": "string", "enum": ["high", "medium", "low"]},
+        "basis": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "uncertain": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    }
+  }
+}
