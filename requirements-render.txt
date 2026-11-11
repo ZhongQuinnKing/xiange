@@ -1,0 +1,4 @@
+# 弦歌 · 渲染档（vv_render／render_v4／bekern_fix）
+verovio>=6
+cairosvg>=2.7
+pillow>=10

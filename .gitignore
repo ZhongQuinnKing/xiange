@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.DS_Store
+.claude/
+*.plist
+screenlog.*
+.ruff_cache/
